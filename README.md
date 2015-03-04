@@ -3,6 +3,7 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 
 * [website](http://alloyteam.github.io/AlloyRenderingEngine/) 
 * [api](http://alloyteam.github.io/AlloyRenderingEngine/doc/)
+* [kmdjs](https://github.com/kmdjs/kmdjs)
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/showcase/bitmap.html) 

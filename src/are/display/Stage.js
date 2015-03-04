@@ -44,6 +44,8 @@ define("ARE.Stage:ARE.Container", {
      
         this.canvas.addEventListener("click", this._handleClick.bind(this), false);
         this.canvas.addEventListener("mousemove", this._handleMouseMove.bind(this), false);
+        window.addEventListener("keydown", this._handleKeyDown.bind(this), false);
+        window.addEventListener("keyup", this._handleKeyUp.bind(this), false);
         this.offset = this._getXY(this.canvas);
 
         this.overObj = null;
@@ -67,6 +69,12 @@ define("ARE.Stage:ARE.Container", {
         }
         //this.ctx.clearRect(0, 0, this.width, this.height);
         //this.draw(this.ctx);
+    },
+    _handleKeyDown: function (evt) {
+        this.keyDownCallback && this.keyDownCallback(evt.keyCode)
+    },
+    _handleKeyUp: function (evt) {
+        this.keyUpCallback && this.keyUpCallback(evt.keyCode)
     },
     _handleClick: function (evt) {
        // var child = this._getHitChild(this.hitCtx, evt.pageX - this.offset[0], evt.pageY - this.offset[1], "click");
@@ -175,6 +183,19 @@ define("ARE.Stage:ARE.Container", {
     setFPS:function(fps){
 
         this.interval=Math.floor(1000/fps);
+    },
+    onKeyDown: function (fn) {
+        this.keyDownCallback = fn;
+    },
+    onKeyUp: function (fn) {
+        this.keyUpCallback = fn;
+    },
+    onKeyboard: function (keyCombo, onDownCallback, onUpCallback) {
+        Keyboard.on(keyCombo, onDownCallback, onUpCallback);
+    },
+    getActiveKeys:function(){
+
+       return Keyboard.getActiveKeys();
     }
 })
 

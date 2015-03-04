@@ -322,21 +322,7 @@
             mat4.rotateZ(mvMatrix, o.rotation * degToRad);
             mat4.scale(mvMatrix, [o.scaleX * mmyCanvas.width, o.scaleY * mmyCanvas.height, 1]);
             mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
-        } else if (o instanceof Bitmap) {
-            // Bitmap is simply the image.
-            img = o.img;
-            samplerID = this._initTexture(img, ctx);
-            mat4.translate(matrix,	[o.x, o.y , 0],	mvMatrix);
-           
-            mat4.rotateX(mvMatrix,	o.skewX * degToRad);
-            mat4.rotateY(mvMatrix,	o.skewY * degToRad);
-            mat4.rotateZ(mvMatrix, o.rotation * degToRad);
-            //先rotate再scale可防止scaleX不等于scaleY时，出现skew
-            mat4.scale(mvMatrix, [o.scaleX * img.width, o.scaleY * img.height, 1]);
-            //待优化
-            mat4.translate(mvMatrix, [-o.originX , -o.originY, 0]);
-
-        } else if (o instanceof Container) {
+        }  else if (o instanceof Container) {
             var list = o.children.slice(0);
             mat4.translate(matrix,	[o.x, o.y , 0], 	mvMatrix);
             
@@ -351,10 +337,8 @@
             this._poolMat4(mvMatrix);
             return;
 			
-        } else if (o instanceof Sprite) {
-            // BitmapAnimation uses a spritesheet, so we get the current frame for image.
-          
-            var rect = o._rect;
+        } else if (o instanceof Bitmap||o instanceof Sprite) {    
+            var rect = o.rect;
             img = o.img;
             samplerID = this._initTexture(img, ctx);
            
@@ -368,6 +352,7 @@
             mat4.rotateX(mvMatrix, o.skewX * degToRad);
             mat4.rotateY(mvMatrix, o.skewY * degToRad);
             mat4.rotateZ(mvMatrix, o.rotation * degToRad);
+            //先rotate再scale可防止scaleX不等于scaleY时，出现skew
             mat4.scale(mvMatrix, [o.scaleX * rect[2], o.scaleY * rect[3], 1]);
             mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
         }
@@ -451,17 +436,15 @@
     renderCache: function (ctx, o) {
         if (!o.isVisible()) { return; }
         // render the element:
-        if (o instanceof Bitmap) {
-            ctx.drawImage(o.img, 0, 0);
-        } else if (o instanceof Container || o instanceof Stage) {
+        if (o instanceof Container || o instanceof Stage) {
             var list = o.children.slice(0);
             for (var i = 0, l = list.length; i < l; i++) {
                 ctx.save();
                 this.canvasRenderer.render(ctx, list[i]);
                 ctx.restore();
             }
-        } else if (o instanceof Sprite) {
-            var rect = o._rect;
+        } else if (o instanceof Bitmap||o instanceof Sprite) {
+            var rect = o.rect;
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
         } else if (o instanceof Shape) {
             for (var i = 0, len = o.cmds.length; i < len; i++) {

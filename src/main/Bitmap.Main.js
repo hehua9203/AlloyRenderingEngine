@@ -14,6 +14,7 @@
           { name: "ARE.CanvasRenderer", url: "are/renderer" },
           { name: "ARE.WebGLRenderer", url: "are/renderer" },
           { name: "ARE.GLMatrix", url: "are/util" },
+          { name: "ARE.Keyboard", url: "are/util" },
           { name: "ARE.RAF", url: "are/util" }
     ]
 });

@@ -13,9 +13,9 @@ define("ARE.Bitmap:ARE.DisplayObject", {
             this.img = document.createElement("img");
             this.img.onload = function () {
                 self.visible = true;
-                self.rect = [0, 0, self.img.width, self.img.height];
-                self.width = self.img.width;
-                self.height = self.img.height;
+                if (!self.rect) self.rect = [0, 0, self.img.width, self.img.height];
+                self.width = self.rect[2];
+                self.height = self.rect[3];
                 self.regX = self.width * self.originX;
                 self.regY = self.height * self.originY;
             }
@@ -52,6 +52,17 @@ define("ARE.Bitmap:ARE.DisplayObject", {
             }
         }
         this.cacheCtx.putImageData(imageData, 0, 0);
+    },
+    setRect: function (x, y, w, h) {
+        this.rect = [x, y, w, h];
+        this.width = w;
+        this.height = h;
+    },
+    clone: function () {
+        var o = new Bitmap(this.img);
+        o.rect = this.rect.slice(0);
+        this.cloneProps(o);
+        return o;
     }
 
 

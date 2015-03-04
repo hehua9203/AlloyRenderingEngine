@@ -4,351 +4,18 @@
 
     ; (function () {
         var ARE = {};
-        //begin-------------------ARE.WebGLRenderer---------------------begin
+        //begin-------------------ARE.UID---------------------begin
 
-        ARE.WebGLRenderer = __class.extend({
-            "ctor": function (root) {
-                this.root = root;
-                this.surface = root.canvas;
-                this.MAX_DEPTH = 1048576;
-                this.snapToPixel = true;
-            },
-            "getSurface": function (width, height) {
-                if (this.surface == null) {
-                    this.surface = document.createElement("canvas");
-                }
-                if (width) {
-                    this.surface.width = width;
-                }
-                if (height) {
-                    this.surface.height = height;
-                }
-                return this.surface;
-            },
-            "clear": function () {
-                if (!this.surface) {
-                    return;
-                }
-                if (!this.surface.init) {
-                    this.initSurface(this.surface);
-                }
-            },
-            "initSurface": function (surface) {
-                var ctx = undefined;
-                try {
-                    ctx = surface.ctx = surface.getContext("experimental-webgl", {
-                        preserveDrawingBuffer: true
-                    });
-                    ctx.viewportWidth = surface.width;
-                    ctx.viewportHeight = surface.height;
-                } catch (e) { }
-                if (!ctx) {
-                    alert("Could not initialise WebGL. Make sure you've updated your browser, or try a different one like Google Chrome.");
-                }
-                surface.idMatrix = ARE.GLMatrix.mat4.create();
-                surface.orthMatrix = ARE.GLMatrix.mat4.create();
-                this._matPool = [];
-                var textureShader = ctx.createShader(ctx.FRAGMENT_SHADER);
-                ctx.shaderSource(textureShader, "" + "precision highp float;\n" + "varying vec3 vTextureCoord;\n" + "varying float vAlpha;\n" + "uniform float uAlpha;\n" + "uniform sampler2D uSampler0,uSampler1,uSampler2,uSampler3,uSampler4,uSampler5,uSampler6," + "uSampler7,uSampler8,uSampler9,uSampler10,uSampler11,uSampler12,uSampler13,uSampler14,uSampler15;\n" + "void main(void) { \n" + "int sampler = int(vTextureCoord.z); \n" + "vec4 color;\n" + "vec2 coord = vec2(vTextureCoord.s, vTextureCoord.t);\n" + " if (sampler == 0) { color = texture2D(uSampler0, coord); } \n" + "else if (sampler == 1) { color = texture2D(uSampler1, coord); } \n" + "else if (sampler == 2) { color = texture2D(uSampler2, coord); } \n" + "else if (sampler == 3) { color = texture2D(uSampler3, coord); } \n" + "else if (sampler == 4) { color = texture2D(uSampler4, coord); } \n" + "else if (sampler == 5) { color = texture2D(uSampler5, coord); } \n" + "else if (sampler == 6) { color = texture2D(uSampler6, coord); } \n" + "else if (sampler == 7) { color = texture2D(uSampler7, coord); } \n" + "else if (sampler == 8) { color = texture2D(uSampler8, coord); } \n" + "else if (sampler == 9) { color = texture2D(uSampler9, coord); } \n" + "else if (sampler == 10) { color = texture2D(uSampler10, coord); } \n" + "else if (sampler == 11) { color = texture2D(uSampler11, coord); } \n" + "else if (sampler == 12) { color = texture2D(uSampler12, coord); } \n" + "else if (sampler == 13) { color = texture2D(uSampler13, coord); } \n" + "else if (sampler == 14) { color = texture2D(uSampler14, coord); } \n" + "else if (sampler == 15) { color = texture2D(uSampler15, coord); } \n" + "else { color = texture2D(uSampler0, vec2(vTextureCoord.s, vTextureCoord.t)); } \n" + "gl_FragColor = vec4(color.rgb, color.a * vAlpha);\n" + "}");
-                ctx.compileShader(textureShader);
-                if (!ctx.getShaderParameter(textureShader, ctx.COMPILE_STATUS)) {
-                    alert(ctx.getShaderInfoLog(textureShader));
-                }
-                var vertexShader = ctx.createShader(ctx.VERTEX_SHADER);
-                ctx.shaderSource(vertexShader, "" + "attribute vec3 aVertexPosition;\n" + "attribute vec3 aTextureCoord;\n" + "attribute float aAlpha;\n" + "uniform mat4 uPMatrix;\n" + "uniform bool uSnapToPixel;\n" + "varying vec3 vTextureCoord;\n" + "varying float vAlpha;\n" + "void main(void) { \n" + "vTextureCoord = aTextureCoord; \n" + "vAlpha = aAlpha; \n" + "gl_Position = uPMatrix * vec4(aVertexPosition, 1.0);\n" + "}");
-                ctx.compileShader(vertexShader);
-                if (!ctx.getShaderParameter(vertexShader, ctx.COMPILE_STATUS)) {
-                    alert(ctx.getShaderInfoLog(vertexShader));
-                }
-                var program = surface.shader = ctx.createProgram();
-                ctx.attachShader(program, vertexShader);
-                ctx.attachShader(program, textureShader);
-                ctx.linkProgram(program);
-                if (!ctx.getProgramParameter(program, ctx.LINK_STATUS)) {
-                    alert("Could not initialise shaders");
-                }
-                ctx.enableVertexAttribArray(program.vertexPositionAttribute = ctx.getAttribLocation(program, "aVertexPosition"));
-                ctx.enableVertexAttribArray(program.uvCoordAttribute = ctx.getAttribLocation(program, "aTextureCoord"));
-                ctx.enableVertexAttribArray(program.colorAttribute = ctx.getAttribLocation(program, "aAlpha"));
-                program.orthMatrixUniform = ctx.getUniformLocation(program, "uPMatrix");
-                program.alphaUniform = ctx.getUniformLocation(program, "uAlpha");
-                program.snapToUniform = ctx.getUniformLocation(program, "uSnapToPixel");
-                ctx.useProgram(program);
-                this._vertexDataCount = 7;
-                this._root2 = Math.sqrt(2);
-                this._index = 0;
-                this._textures = [];
-                this._cacheTextures = [];
-                this._degToRad = Math.PI / 180;
-                if (window.Float32Array) {
-                    this.vertices = new window.Float32Array(this._vertexDataCount * 4 * 5e3);
-                } else {
-                    this.vertices = new Array(this._vertexDataCount * 4 * 5e3);
-                }
-                this.arrayBuffer = ctx.createBuffer();
-                this.indexBuffer = ctx.createBuffer();
-                ctx.bindBuffer(ctx.ARRAY_BUFFER, this.arrayBuffer);
-                ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-                var byteCount = this._vertexDataCount * 4;
-                ctx.vertexAttribPointer(program.vertexPositionAttribute, 3, ctx.FLOAT, 0, byteCount, 0);
-                ctx.vertexAttribPointer(program.uvCoordAttribute, 3, ctx.FLOAT, 0, byteCount, 12);
-                ctx.vertexAttribPointer(program.colorAttribute, 1, ctx.FLOAT, 0, byteCount, 24);
-                if (window.Uint16Array) {
-                    this.indices = new window.Uint16Array(3e4);
-                } else {
-                    this.indices = new Array(3e4);
-                }
-                for (var i = 0, l = this.indices.length; i < l; i += 6) {
-                    var j = i * 4 / 6;
-                    this.indices.set([j, j + 1, j + 2, j, j + 2, j + 3], i);
-                }
-                ctx.bufferData(ctx.ARRAY_BUFFER, this.vertices, ctx.STREAM_DRAW);
-                ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, this.indices, ctx.STATIC_DRAW);
-                ARE.GLMatrix.mat4.ortho(0, ctx.viewportWidth, ctx.viewportHeight, 0, -this.MAX_DEPTH, this.MAX_DEPTH, surface.orthMatrix);
-                ctx.viewport(0, 0, ctx.viewportWidth, ctx.viewportHeight);
-                ctx.colorMask(true, true, true, true);
-                ctx.blendFuncSeparate(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA, ctx.SRC_ALPHA, ctx.ONE);
-                ctx.enable(ctx.BLEND);
-                ctx.disable(ctx.DEPTH_TEST);
-                surface.init = true;
-            },
-            "_initTexture": function (src, ctx) {
-                if (!src) {
-                    return;
-                }
-                var textures = this._textures;
-                var textureCount = this._cacheTextures.length + this._textures.length;
-                for (var i = 0, l = textures.length; i < l; i++) {
-                    if (textures[i].image == src) {
-                        src.glTexture = textures[i];
-                        return i;
-                    }
-                }
-                if (!src.glTexture) {
-                    src.glTexture = ctx.createTexture();
-                    src.glTexture.image = src;
-                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
-                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
-                    ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, src.glTexture.image);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
-                } else {
-                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
-                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
-                }
-                ctx.uniform1i(ctx.getUniformLocation(ctx.canvas.shader, "uSampler" + textureCount.toString()), textureCount);
-                textures.push(src.glTexture);
-                return textureCount;
-            },
-            "_initCache": function (o, src, ctx) {
-                if (!src) {
-                    return;
-                }
-                var textures = this._cacheTextures;
-                var textureCount = this._textures.length;
-                for (var i = 0, l = textures.length; i < l; i++) {
-                    if (o.cacheID && textures[i]._cacheID == o.cacheID) {
-                        textures[i]._isUsed = true;
-                        src.glTexture = textures[i];
-                        ctx.activeTexture(ctx["TEXTURE" + textureCount]);
-                        ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
-                        this._textures.push(src.glTexture);
-                        return i;
-                    }
-                }
-                if (!src.glTexture) {
-                    src.glTexture = ctx.createTexture();
-                    src.glTexture.image = src;
-                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
-                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
-                    ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, src.glTexture.image);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
-                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
-                } else {
-                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
-                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
-                }
-                ctx.uniform1i(ctx.getUniformLocation(ctx.canvas.shader, "uSampler" + textureCount.toString()), textureCount);
-                src._cacheID = o.cacheID;
-                src.glTexture._isUsed = true;
-                this._textures.push(src.glTexture);
-                textures.push(src.glTexture);
-                return textureCount;
-            },
-            "render": function (displayObject, surface) {
-                displayObject = displayObject || this.root;
-                surface = surface || this.surface;
-                var ctx = surface.ctx;
-                if (this.snapToPixel) {
-                    ctx.uniform1i(surface.shader.snapToUniform, 1);
-                } else {
-                    ctx.uniform1i(surface.shader.snapToUniform, 0);
-                }
-                ARE.GLMatrix.mat4.identity(surface.idMatrix);
-                ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
-                ctx.uniformMatrix4fv(surface.shader.orthMatrixUniform, false, surface.orthMatrix);
-                if (!surface.init) {
-                    this.initSurface(surface);
-                }
-                if (displayObject && surface) {
-                    var docFrag = document.createDocumentFragment();
-                    this._render(ctx, displayObject, surface.idMatrix, docFrag);
-                    this._draw(ctx);
-                }
-                this._cleanCache();
-            },
-            "_render": function (ctx, o, matrix, docFrag) {
-                if (o.compositeOperation === "lighter") {
-                    ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE);
-                }
-                var mat4 = ARE.GLMatrix.mat4;
-                if (!o.isVisible()) {
-                    return;
-                }
-                var testLength = (this._index + 4) * this._vertexDataCount;
-                if (this.vertices.length < testLength) {
-                    this._draw(ctx);
-                }
-                var uFrame = 0,
-                    vFrame = 0,
-                    u = 1,
-                    v = 1,
-                    img = 0;
-                var degToRad = this._degToRad;
-                var mvMatrix = this._getMat4();
-                var samplerID = 0;
-                var mmyCanvas = o.cacheCanvas || o.txtCanvas;
-                if (mmyCanvas) {
-                    samplerID = this._initCache(o, mmyCanvas, ctx);
-                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
-                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
-                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
-                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
-                    mat4.scale(mvMatrix, [o.scaleX * mmyCanvas.width, o.scaleY * mmyCanvas.height, 1]);
-                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
-                } else if (o instanceof ARE.Bitmap) {
-                    img = o.img;
-                    samplerID = this._initTexture(img, ctx);
-                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
-                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
-                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
-                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
-                    mat4.scale(mvMatrix, [o.scaleX * img.width, o.scaleY * img.height, 1]);
-                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
-                } else if (o instanceof ARE.Container) {
-                    var list = o.children.slice(0);
-                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
-                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
-                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
-                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
-                    mat4.scale(mvMatrix, [o.scaleX, o.scaleY, 1]);
-                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
-                    for (var i = 0, l = list.length; i < l; i++) {
-                        this._render(ctx, list[i], mvMatrix);
-                    }
-                    this._poolMat4(mvMatrix);
-                    return;
-                } else if (o instanceof ARE.Sprite) {
-                    var rect = o._rect;
-                    img = o.img;
-                    samplerID = this._initTexture(img, ctx);
-                    u = rect[2] / img.width;
-                    v = rect[3] / img.height;
-                    uFrame = rect[0] / img.width;
-                    vFrame = rect[1] / img.height;
-                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
-                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
-                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
-                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
-                    mat4.scale(mvMatrix, [o.scaleX * rect[2], o.scaleY * rect[3], 1]);
-                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
-                }
-                var pos1 = mat4.multiplyVec3(mvMatrix, [0, 0, 0]);
-                var pos2 = mat4.multiplyVec3(mvMatrix, [0, 1, 0]);
-                var pos3 = mat4.multiplyVec3(mvMatrix, [1, 1, 0]);
-                var pos4 = mat4.multiplyVec3(mvMatrix, [1, 0, 0]);
-                var alpha = o.alpha;
-                this.vertices.set([pos1[0], pos1[1], pos1[2], uFrame, vFrame, samplerID, alpha, pos2[0], pos2[1], pos2[2], uFrame, vFrame + v, samplerID, alpha, pos3[0], pos3[1], pos3[2], uFrame + u, vFrame + v, samplerID, alpha, pos4[0], pos4[1], pos4[2], uFrame + u, vFrame, samplerID, alpha], this._index * this._vertexDataCount);
-                this._index += 4;
-                this._poolMat4(mvMatrix);
-                if (this._textures.length + this._cacheTextures.length > 31) {
-                    this._draw(ctx);
-                }
-            },
-            "_draw": function (ctx) {
-                ctx.bufferSubData(ctx.ARRAY_BUFFER, 0, this.vertices.subarray(0, this._index * this._vertexDataCount));
-                ctx.drawElements(ctx.TRIANGLES, this._index * 1.5, ctx.UNSIGNED_SHORT, 0);
-                this._index = 0;
-                this._textureCount = 0;
-                this._textures = [];
-            },
-            "_cleanCache": function () {
-                var textures = this._cacheTextures;
-                for (var i = 0, l = textures.length; i < l; i++) {
-                    if (!textures[i]._isUsed) {
-                        textures.splice(i, 1);
-                        i--;
-                        l--;
-                    } else {
-                        textures[i]._isUsed = false;
-                    }
-                }
-            },
-            "_getMat4": function () {
-                if (this._matPool.length > 0) {
-                    return this._matPool.pop();
-                } else {
-                    return ARE.GLMatrix.mat4.create();
-                }
-            },
-            "_poolMat4": function (mat) {
-                this._matPool.push(mat);
-            },
-            "update": function () {
-                this.clear();
-                if (this.tickOnUpdate) {
-                    this.tickDisplayList(this.root, this.arguments);
-                }
-                this.render(this.root, this.surface);
-            },
-            "updateCache": function (ctx, o, w, h) {
-                ctx.clearRect(0, 0, w + 1, h + 1);
-                this.renderCache(ctx, o);
-            },
-            "renderCache": function (ctx, o) {
-                if (!o.isVisible()) {
-                    return;
-                }
-                if (o instanceof ARE.Bitmap) {
-                    ctx.drawImage(o.img, 0, 0);
-                } else if (o instanceof ARE.Container || o instanceof ARE.Stage) {
-                    var list = o.children.slice(0);
-                    for (var i = 0, l = list.length; i < l; i++) {
-                        ctx.save();
-                        this.renderCache(ctx, list[i]);
-                        ctx.restore();
-                    }
-                } else if (o instanceof ARE.Sprite) {
-                    var rect = o._rect;
-                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-                } else if (o instanceof ARE.Shape) {
-                    for (var i = 0, len = o.cmds.length; i < len; i++) {
-                        var cmd = o.cmds[i];
-                        if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
-                            ctx[cmd[0]] = cmd[1][0];
-                        } else {
-                            ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
-                        }
-                    }
+        ARE.UID = __class.extend({
+            "statics": {
+                "_nextID": 0,
+                "get": function () {
+                    return this._nextID++;
                 }
             }
         });
 
-        //end-------------------ARE.WebGLRenderer---------------------end
+        //end-------------------ARE.UID---------------------end
 
         //begin-------------------ARE.DisplayObject---------------------begin
 
@@ -454,121 +121,91 @@
             },
             "onClick": function (fn) {
                 this.on("click", fn);
+            },
+            "onMouseMove": function (fn) {
+                this.on("mousemove", fn);
             }
         });
 
         //end-------------------ARE.DisplayObject---------------------end
 
-        //begin-------------------ARE.Bitmap---------------------begin
+        //begin-------------------ARE.Sprite---------------------begin
 
-        ARE.Bitmap = ARE.DisplayObject.extend({
-            "ctor": function (img) {
+        ARE.Sprite = ARE.DisplayObject.extend({
+            "ctor": function (option) {
                 this._super();
-                if (typeof img == "string") {
-                    var self = this;
-                    this.img = document.createElement("img");
-                    this.img.onload = function () {
-                        self.rect = [0, 0, self.img.width, self.img.height];
-                        self.width = self.img.width;
-                        self.height = self.img.height;
-                        self.regX = self.width * self.originX;
-                        self.regY = self.height * self.originY;
-                    };
-                    this.img.src = img;
-                } else {
-                    this.img = img;
-                    this.rect = [0, 0, img.width, img.height];
-                    this.width = img.width;
-                    this.height = img.height;
+                this.option = option;
+                this.x = option.x || 0;
+                this.y = option.y || 0;
+                this.currentFrameIndex = 0;
+                this.animationFrameIndex = 0;
+                this.currentAnimation = option.currentAnimation || null;
+                this.rect = [0, 0, 10, 10];
+                this.img = this.option.imgs[0];
+                this.interval = 1e3 / option.framerate;
+                this.loop = null;
+                this.paused = false;
+                this.animationEnd = option.animationEnd || null;
+                if (this.currentAnimation) {
+                    this.gotoAndPlay(this.currentAnimation);
                 }
+                this.tickAnimationEnd = option.tickAnimationEnd || null;
             },
-            "setFilter": function (r, g, b, a) {
-                this.uncache();
-                this.cache();
-                var imageData = this.cacheCtx.getImageData(0, 0, this.cacheCanvas.width, this.cacheCanvas.height);
-                var pix = imageData.data;
-                for (var i = 0, n = pix.length; i < n; i += 4) {
-                    if (pix[i + 3] > 0) {
-                        pix[i] *= r;
-                        pix[i + 1] *= g;
-                        pix[i + 2] *= b;
-                        pix[i + 3] *= a;
-                    }
-                }
-                this.cacheCtx.putImageData(imageData, 0, 0);
-            }
-        });
-
-        //end-------------------ARE.Bitmap---------------------end
-
-        //begin-------------------ARE.Container---------------------begin
-
-        ARE.Container = ARE.DisplayObject.extend({
-            "ctor": function () {
-                this._super();
-                this.children = [];
-                this.baseInstanceof = "Container";
+            "play": function () {
+                this.paused = false;
             },
-            "add": function (obj) {
-                var len = arguments.length;
-                if (len > 1) {
-                    for (var i = 0; i < len; i++) {
-                        var item = arguments[i];
-                        if (item) {
-                            this.children.push(item);
-                            item.parent = this;
-                        }
-                    }
-                } else {
-                    if (obj) {
-                        this.children.push(obj);
-                        obj.parent = this;
-                    }
-                }
+            "stop": function () {
+                this.paused = true;
             },
-            "remove": function (obj) {
-                var len = arguments.length,
-                    childLen = this.children.length;
-                if (len > 1) {
-                    for (var j = 0; j < len; j++) {
-                        var currentObj = arguments[j];
-                        for (var k = childLen; --k >= 0;) {
-                            if (this.children[k].id == currentObj.id) {
-                                currentObj.parent = null;
-                                this.children.splice(k, 1);
-                                break;
+            "reset": function () {
+                this.currentFrameIndex = 0;
+                this.animationFrameIndex = 0;
+            },
+            "gotoAndPlay": function (animation, times) {
+                this.paused = false;
+                this.reset();
+                ARE.RAF.clearRequestInterval(this.loop);
+                this.currentAnimation = animation;
+                var self = this;
+                var playTimes = 0;
+                this.loop = ARE.RAF.requestInterval(function () {
+                    if (!self.paused) {
+                        var opt = self.option;
+                        var frames = opt.animations[self.currentAnimation].frames,
+                            len = frames.length;
+                        self.animationFrameIndex++;
+                        if (self.animationFrameIndex > len - 1) {
+                            playTimes++;
+                            self.animationFrameIndex = 0;
+                            if (self.tickAnimationEnd) {
+                                self.tickAnimationEnd();
+                            }
+                            if (times && playTimes == times) {
+                                if (self.animationEnd) self.animationEnd();
+                                self.paused = true;
+                                ARE.RAF.clearRequestInterval(self.loop);
+                                self.parent.remove(self);
                             }
                         }
+                        self.rect = opt.frames[frames[self.animationFrameIndex]];
+                        if (self.rect.length > 4) self.img = opt.imgs[self.rect[4]];
                     }
-                } else {
-                    for (var i = childLen; --i >= 0;) {
-                        if (this.children[i].id == obj.id) {
-                            obj.parent = null;
-                            this.children.splice(i, 1);
-                            break;
-                        }
-                    }
-                }
+                }, this.interval);
             },
-            "clone": function () {
-                var o = new ARE.Container();
-                this.cloneProps(o);
-                var arr = o.children = [];
-                for (var i = this.children.length - 1; i > -1; i--) {
-                    var clone = this.children[i].clone();
-                    arr.unshift(clone);
-                }
-                return o;
-            },
-            "removeAll": function () {
-                var kids = this.children;
-                while (kids.length) {
-                    kids.pop().parent = null;
-                }
+            "gotoAndStop": function (animation) {
+                this.reset();
+                ARE.RAF.clearRequestInterval(this.loop);
+                var self = this;
+                self.currentAnimation = animation;
+                var opt = self.option;
+                var frames = opt.animations[self.currentAnimation].frames,
+                    len = frames.length;
+                self.rect = opt.frames[frames[self.animationFrameIndex]];
+                if (self.rect.length > 4) self.img = opt.imgs[self.rect[4]];
             }
         });
 
-        //end-------------------ARE.Container---------------------end
+        //end-------------------ARE.Sprite---------------------end
 
         //begin-------------------ARE.Shape---------------------begin
 
@@ -649,83 +286,74 @@
 
         //end-------------------ARE.Shape---------------------end
 
-        //begin-------------------ARE.Sprite---------------------begin
+        //begin-------------------ARE.Container---------------------begin
 
-        ARE.Sprite = ARE.DisplayObject.extend({
-            "ctor": function (option) {
+        ARE.Container = ARE.DisplayObject.extend({
+            "ctor": function () {
                 this._super();
-                this.option = option;
-                this.x = option.x || 0;
-                this.y = option.y || 0;
-                this.currentFrameIndex = 0;
-                this.animationFrameIndex = 0;
-                this.currentAnimation = option.currentAnimation || null;
-                this._rect = [0, 0, 10, 10];
-                this.img = this.option.imgs[0];
-                this.interval = 1e3 / option.framerate;
-                this.loop = null;
-                this.paused = false;
-                this.animationEnd = option.animationEnd || null;
-                if (this.currentAnimation) {
-                    this.gotoAndPlay(this.currentAnimation);
+                this.children = [];
+                this.baseInstanceof = "Container";
+            },
+            "add": function (obj) {
+                var len = arguments.length;
+                if (len > 1) {
+                    for (var i = 0; i < len; i++) {
+                        var item = arguments[i];
+                        if (item) {
+                            this.children.push(item);
+                            item.parent = this;
+                        }
+                    }
+                } else {
+                    if (obj) {
+                        this.children.push(obj);
+                        obj.parent = this;
+                    }
                 }
-                this.tickAnimationEnd = option.tickAnimationEnd || null;
             },
-            "play": function () {
-                this.paused = false;
-            },
-            "stop": function () {
-                this.paused = true;
-            },
-            "reset": function () {
-                this.currentFrameIndex = 0;
-                this.animationFrameIndex = 0;
-            },
-            "gotoAndPlay": function (animation, times) {
-                this.paused = false;
-                this.reset();
-                ARE.RAF.clearRequestInterval(this.loop);
-                this.currentAnimation = animation;
-                var self = this;
-                var playTimes = 0;
-                this.loop = ARE.RAF.requestInterval(function () {
-                    if (!self.paused) {
-                        var opt = self.option;
-                        var frames = opt.animations[self.currentAnimation].frames,
-                            len = frames.length;
-                        self.animationFrameIndex++;
-                        if (self.animationFrameIndex > len - 1) {
-                            playTimes++;
-                            self.animationFrameIndex = 0;
-                            if (self.tickAnimationEnd) {
-                                self.tickAnimationEnd();
-                            }
-                            if (times && playTimes == times) {
-                                if (self.animationEnd) self.animationEnd();
-                                self.paused = true;
-                                ARE.RAF.clearRequestInterval(self.loop);
-                                self.parent.remove(self);
+            "remove": function (obj) {
+                var len = arguments.length,
+                    childLen = this.children.length;
+                if (len > 1) {
+                    for (var j = 0; j < len; j++) {
+                        var currentObj = arguments[j];
+                        for (var k = childLen; --k >= 0;) {
+                            if (this.children[k].id == currentObj.id) {
+                                currentObj.parent = null;
+                                this.children.splice(k, 1);
+                                break;
                             }
                         }
-                        self._rect = opt.frames[frames[self.animationFrameIndex]];
-                        if (self._rect.length > 4) self.img = opt.imgs[self._rect[4]];
                     }
-                }, this.interval);
+                } else {
+                    for (var i = childLen; --i >= 0;) {
+                        if (this.children[i].id == obj.id) {
+                            obj.parent = null;
+                            this.children.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
             },
-            "gotoAndStop": function (animation) {
-                this.reset();
-                ARE.RAF.clearRequestInterval(this.loop);
-                var self = this;
-                self.currentAnimation = animation;
-                var opt = self.option;
-                var frames = opt.animations[self.currentAnimation].frames,
-                    len = frames.length;
-                self._rect = opt.frames[frames[self.animationFrameIndex]];
-                if (self._rect.length > 4) self.img = opt.imgs[self._rect[4]];
+            "clone": function () {
+                var o = new ARE.Container();
+                this.cloneProps(o);
+                var arr = o.children = [];
+                for (var i = this.children.length - 1; i > -1; i--) {
+                    var clone = this.children[i].clone();
+                    arr.unshift(clone);
+                }
+                return o;
+            },
+            "removeAll": function () {
+                var kids = this.children;
+                while (kids.length) {
+                    kids.pop().parent = null;
+                }
             }
         });
 
-        //end-------------------ARE.Sprite---------------------end
+        //end-------------------ARE.Container---------------------end
 
         //begin-------------------ARE.Stage---------------------begin
 
@@ -769,6 +397,8 @@
                 };
                 this.canvas.addEventListener("click", this._handleClick.bind(this), false);
                 this.canvas.addEventListener("mousemove", this._handleMouseMove.bind(this), false);
+                window.addEventListener("keydown", this._handleKeyDown.bind(this), false);
+                window.addEventListener("keyup", this._handleKeyUp.bind(this), false);
                 this.offset = this._getXY(this.canvas);
                 this.overObj = null;
                 this.pause = false;
@@ -782,6 +412,12 @@
                 if (!this.pause) {
                     this.renderer.update();
                 }
+            },
+            "_handleKeyDown": function (evt) {
+                this.keyDownCallback && this.keyDownCallback(evt.keyCode);
+            },
+            "_handleKeyUp": function (evt) {
+                this.keyUpCallback && this.keyUpCallback(evt.keyCode);
             },
             "_handleClick": function (evt) {
                 evt.stageX = evt.pageX - this.offset[0];
@@ -880,6 +516,18 @@
             },
             "setFPS": function (fps) {
                 this.interval = Math.floor(1e3 / fps);
+            },
+            "onKeyDown": function (fn) {
+                this.keyDownCallback = fn;
+            },
+            "onKeyUp": function (fn) {
+                this.keyUpCallback = fn;
+            },
+            "onKeyboard": function (keyCombo, onDownCallback, onUpCallback) {
+                ARE.Keyboard.on(keyCombo, onDownCallback, onUpCallback);
+            },
+            "getActiveKeys": function () {
+                return ARE.Keyboard.getActiveKeys();
             }
         });
 
@@ -1226,6 +874,665 @@
         });
 
         //end-------------------ARE.Loader---------------------end
+
+        //begin-------------------ARE.Bitmap---------------------begin
+
+        ARE.Bitmap = ARE.DisplayObject.extend({
+            "ctor": function (img) {
+                this._super();
+                if (typeof img == "string") {
+                    var self = this;
+                    this.visible = false;
+                    this.img = document.createElement("img");
+                    this.img.onload = function () {
+                        self.visible = true;
+                        if (!self.rect) self.rect = [0, 0, self.img.width, self.img.height];
+                        self.width = self.rect[2];
+                        self.height = self.rect[3];
+                        self.regX = self.width * self.originX;
+                        self.regY = self.height * self.originY;
+                    };
+                    this.img.src = img;
+                } else {
+                    this.img = img;
+                    this.rect = [0, 0, img.width, img.height];
+                    this.width = img.width;
+                    this.height = img.height;
+                }
+            },
+            "setFilter": function (r, g, b, a) {
+                this.uncache();
+                this.cache();
+                var imageData = this.cacheCtx.getImageData(0, 0, this.cacheCanvas.width, this.cacheCanvas.height);
+                var pix = imageData.data;
+                for (var i = 0, n = pix.length; i < n; i += 4) {
+                    if (pix[i + 3] > 0) {
+                        pix[i] *= r;
+                        pix[i + 1] *= g;
+                        pix[i + 2] *= b;
+                        pix[i + 3] *= a;
+                    }
+                }
+                this.cacheCtx.putImageData(imageData, 0, 0);
+            },
+            "setRect": function (x, y, w, h) {
+                this.rect = [x, y, w, h];
+                this.width = w;
+                this.height = h;
+            },
+            "clone": function () {
+                var o = new ARE.Bitmap(this.img);
+                o.rect = this.rect.slice(0);
+                this.cloneProps(o);
+                return o;
+            }
+        });
+
+        //end-------------------ARE.Bitmap---------------------end
+
+        //begin-------------------ARE.CanvasRenderer---------------------begin
+
+        ARE.CanvasRenderer = __class.extend({
+            "ctor": function (stage) {
+                if (stage) {
+                    this.stage = stage;
+                    this.ctx = stage.ctx;
+                    this.height = stage.width;
+                    this.width = stage.height;
+                }
+            },
+            "update": function () {
+                this.ctx.clearRect(0, 0, this.height, this.width);
+                this.render(this.ctx, this.stage);
+            },
+            "render": function (ctx, o, mtx) {
+                if (!o.isVisible()) {
+                    return;
+                }
+                if (mtx) {
+                    o._matrix.reinitialize(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx, mtx.ty, mtx.alpha, mtx.shadow, mtx.compositeOperation);
+                } else {
+                    o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
+                }
+                mtx = o._matrix;
+                mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+                var a = ctx.globalAlpha,
+                    cp = ctx.globalCompositeOperation;
+                ctx.globalAlpha *= o.alpha;
+                ctx.globalCompositeOperation = o.compositeOperation;
+                var mmyCanvas = o.cacheCanvas || o.txtCanvas;
+                if (mmyCanvas) {
+                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
+                    ctx.drawImage(mmyCanvas, 0, 0);
+                } else if (o instanceof ARE.Container || o instanceof ARE.Stage) {
+                    var list = o.children.slice(0);
+                    for (var i = 0, l = list.length; i < l; i++) {
+                        ctx.save();
+                        this.render(ctx, list[i], mtx);
+                        ctx.restore();
+                    }
+                } else if (o instanceof ARE.Bitmap || o instanceof ARE.Sprite) {
+                    var rect = o.rect;
+                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
+                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
+                } else if (o instanceof ARE.Shape) {
+                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
+                    for (var i = 0, len = o.cmds.length; i < len; i++) {
+                        var cmd = o.cmds[i];
+                        if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
+                            ctx[cmd[0]] = cmd[1][0];
+                        } else {
+                            ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
+                        }
+                    }
+                }
+                ctx.globalAlpha = a;
+                ctx.globalCompositeOperation = cp;
+            },
+            "hitRender": function (ctx, o, mtx, x, y, type) {
+                ctx.clearRect(0, 0, 2, 2);
+                if (mtx) {
+                    o._matrix.reinitialize(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx, mtx.ty, mtx.alpha, mtx.shadow, mtx.compositeOperation);
+                } else {
+                    o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
+                }
+                mtx = o._matrix;
+                mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+                var list = o.children.slice(0),
+                    l = list.length;
+                for (var i = l - 1; i >= 0; i--) {
+                    var child = list[i];
+                    mtx.reinitialize(1, 0, 0, 1, 0, 0);
+                    mtx.appendTransform(o.x - x, o.y - y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+                    ctx.save();
+                    var child = list[i];
+                    this._hitRender(ctx, list[i], mtx, type);
+                    ctx.restore();
+                    if (ctx.getImageData(0, 0, 1, 1).data[3] > 1) {
+                        child.execEvent(type);
+                        return child;
+                    }
+                }
+            },
+            "_hitRender": function (ctx, o, mtx, type) {
+                if (!o.isVisible()) {
+                    return;
+                }
+                if (mtx) {
+                    o._matrix.reinitialize(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx, mtx.ty, mtx.alpha, mtx.shadow, mtx.compositeOperation);
+                } else {
+                    o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
+                }
+                mtx = o._matrix;
+                mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+                var a = ctx.globalAlpha;
+                ctx.globalAlpha *= o.alpha;
+                if (o.cacheCanvas) {
+                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
+                    ctx.drawImage(o.cacheCanvas || o.img, 0, 0);
+                } else if (o instanceof ARE.Container) {
+                    var list = o.children.slice(0),
+                        l = list.length;
+                    for (var i = l - 1; i >= 0; i--) {
+                        var child = list[i];
+                        ctx.save();
+                        var child = list[i];
+                        this._hitRender(ctx, list[i], mtx);
+                        ctx.restore();
+                        if (ctx.getImageData(0, 0, 1, 1).data[3] > 1) {
+                            child.execEvent(type);
+                        }
+                    }
+                } else if (o instanceof ARE.Bitmap || o instanceof ARE.Sprite) {
+                    var rect = o.rect;
+                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
+                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
+                }
+                ctx.globalAlpha = a;
+            },
+            "updateCache": function (ctx, o, w, h) {
+                ctx.clearRect(0, 0, w + 1, h + 1);
+                this.renderCache(ctx, o);
+            },
+            "renderCache": function (ctx, o) {
+                if (!o.isVisible()) {
+                    return;
+                }
+                if (o instanceof ARE.Container || o instanceof ARE.Stage) {
+                    var list = o.children.slice(0);
+                    for (var i = 0, l = list.length; i < l; i++) {
+                        ctx.save();
+                        this.render(ctx, list[i]);
+                        ctx.restore();
+                    }
+                } else if (o instanceof ARE.Bitmap || o instanceof ARE.Sprite) {
+                    var rect = o.rect;
+                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
+                } else if (o instanceof ARE.Shape) {
+                    for (var i = 0, len = o.cmds.length; i < len; i++) {
+                        var cmd = o.cmds[i];
+                        if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
+                            ctx[cmd[0]] = cmd[1][0];
+                        } else {
+                            ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
+                        }
+                    }
+                }
+            }
+        });
+
+        //end-------------------ARE.CanvasRenderer---------------------end
+
+        //begin-------------------ARE.WebGLRenderer---------------------begin
+
+        ARE.WebGLRenderer = __class.extend({
+            "ctor": function (root) {
+                this.root = root;
+                this.surface = root.canvas;
+                this.MAX_DEPTH = 1048576;
+                this.snapToPixel = true;
+                this.canvasRenderer = new ARE.CanvasRenderer();
+            },
+            "getSurface": function (width, height) {
+                if (this.surface == null) {
+                    this.surface = document.createElement("canvas");
+                }
+                if (width) {
+                    this.surface.width = width;
+                }
+                if (height) {
+                    this.surface.height = height;
+                }
+                return this.surface;
+            },
+            "clear": function () {
+                if (!this.surface) {
+                    return;
+                }
+                if (!this.surface.init) {
+                    this.initSurface(this.surface);
+                }
+            },
+            "initSurface": function (surface) {
+                var ctx = undefined;
+                try {
+                    ctx = surface.ctx = surface.getContext("experimental-webgl", {
+                        preserveDrawingBuffer: true
+                    });
+                    ctx.viewportWidth = surface.width;
+                    ctx.viewportHeight = surface.height;
+                } catch (e) { }
+                if (!ctx) {
+                    alert("Could not initialise WebGL. Make sure you've updated your browser, or try a different one like Google Chrome.");
+                }
+                surface.idMatrix = ARE.GLMatrix.mat4.create();
+                surface.orthMatrix = ARE.GLMatrix.mat4.create();
+                this._matPool = [];
+                var textureShader = ctx.createShader(ctx.FRAGMENT_SHADER);
+                ctx.shaderSource(textureShader, "" + "precision highp float;\n" + "varying vec3 vTextureCoord;\n" + "varying float vAlpha;\n" + "uniform float uAlpha;\n" + "uniform sampler2D uSampler0,uSampler1,uSampler2,uSampler3,uSampler4,uSampler5,uSampler6," + "uSampler7,uSampler8,uSampler9,uSampler10,uSampler11,uSampler12,uSampler13,uSampler14,uSampler15;\n" + "void main(void) { \n" + "int sampler = int(vTextureCoord.z); \n" + "vec4 color;\n" + "vec2 coord = vec2(vTextureCoord.s, vTextureCoord.t);\n" + " if (sampler == 0) { color = texture2D(uSampler0, coord); } \n" + "else if (sampler == 1) { color = texture2D(uSampler1, coord); } \n" + "else if (sampler == 2) { color = texture2D(uSampler2, coord); } \n" + "else if (sampler == 3) { color = texture2D(uSampler3, coord); } \n" + "else if (sampler == 4) { color = texture2D(uSampler4, coord); } \n" + "else if (sampler == 5) { color = texture2D(uSampler5, coord); } \n" + "else if (sampler == 6) { color = texture2D(uSampler6, coord); } \n" + "else if (sampler == 7) { color = texture2D(uSampler7, coord); } \n" + "else if (sampler == 8) { color = texture2D(uSampler8, coord); } \n" + "else if (sampler == 9) { color = texture2D(uSampler9, coord); } \n" + "else if (sampler == 10) { color = texture2D(uSampler10, coord); } \n" + "else if (sampler == 11) { color = texture2D(uSampler11, coord); } \n" + "else if (sampler == 12) { color = texture2D(uSampler12, coord); } \n" + "else if (sampler == 13) { color = texture2D(uSampler13, coord); } \n" + "else if (sampler == 14) { color = texture2D(uSampler14, coord); } \n" + "else if (sampler == 15) { color = texture2D(uSampler15, coord); } \n" + "else { color = texture2D(uSampler0, vec2(vTextureCoord.s, vTextureCoord.t)); } \n" + "gl_FragColor = vec4(color.rgb, color.a * vAlpha);\n" + "}");
+                ctx.compileShader(textureShader);
+                if (!ctx.getShaderParameter(textureShader, ctx.COMPILE_STATUS)) {
+                    alert(ctx.getShaderInfoLog(textureShader));
+                }
+                var vertexShader = ctx.createShader(ctx.VERTEX_SHADER);
+                ctx.shaderSource(vertexShader, "" + "attribute vec3 aVertexPosition;\n" + "attribute vec3 aTextureCoord;\n" + "attribute float aAlpha;\n" + "uniform mat4 uPMatrix;\n" + "uniform bool uSnapToPixel;\n" + "varying vec3 vTextureCoord;\n" + "varying float vAlpha;\n" + "void main(void) { \n" + "vTextureCoord = aTextureCoord; \n" + "vAlpha = aAlpha; \n" + "gl_Position = uPMatrix * vec4(aVertexPosition, 1.0);\n" + "}");
+                ctx.compileShader(vertexShader);
+                if (!ctx.getShaderParameter(vertexShader, ctx.COMPILE_STATUS)) {
+                    alert(ctx.getShaderInfoLog(vertexShader));
+                }
+                var program = surface.shader = ctx.createProgram();
+                ctx.attachShader(program, vertexShader);
+                ctx.attachShader(program, textureShader);
+                ctx.linkProgram(program);
+                if (!ctx.getProgramParameter(program, ctx.LINK_STATUS)) {
+                    alert("Could not initialise shaders");
+                }
+                ctx.enableVertexAttribArray(program.vertexPositionAttribute = ctx.getAttribLocation(program, "aVertexPosition"));
+                ctx.enableVertexAttribArray(program.uvCoordAttribute = ctx.getAttribLocation(program, "aTextureCoord"));
+                ctx.enableVertexAttribArray(program.colorAttribute = ctx.getAttribLocation(program, "aAlpha"));
+                program.orthMatrixUniform = ctx.getUniformLocation(program, "uPMatrix");
+                program.alphaUniform = ctx.getUniformLocation(program, "uAlpha");
+                program.snapToUniform = ctx.getUniformLocation(program, "uSnapToPixel");
+                ctx.useProgram(program);
+                this._vertexDataCount = 7;
+                this._root2 = Math.sqrt(2);
+                this._index = 0;
+                this._textures = [];
+                this._cacheTextures = [];
+                this._degToRad = Math.PI / 180;
+                if (window.Float32Array) {
+                    this.vertices = new window.Float32Array(this._vertexDataCount * 4 * 5e3);
+                } else {
+                    this.vertices = new Array(this._vertexDataCount * 4 * 5e3);
+                }
+                this.arrayBuffer = ctx.createBuffer();
+                this.indexBuffer = ctx.createBuffer();
+                ctx.bindBuffer(ctx.ARRAY_BUFFER, this.arrayBuffer);
+                ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+                var byteCount = this._vertexDataCount * 4;
+                ctx.vertexAttribPointer(program.vertexPositionAttribute, 3, ctx.FLOAT, 0, byteCount, 0);
+                ctx.vertexAttribPointer(program.uvCoordAttribute, 3, ctx.FLOAT, 0, byteCount, 12);
+                ctx.vertexAttribPointer(program.colorAttribute, 1, ctx.FLOAT, 0, byteCount, 24);
+                if (window.Uint16Array) {
+                    this.indices = new window.Uint16Array(3e4);
+                } else {
+                    this.indices = new Array(3e4);
+                }
+                for (var i = 0, l = this.indices.length; i < l; i += 6) {
+                    var j = i * 4 / 6;
+                    this.indices.set([j, j + 1, j + 2, j, j + 2, j + 3], i);
+                }
+                ctx.bufferData(ctx.ARRAY_BUFFER, this.vertices, ctx.STREAM_DRAW);
+                ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, this.indices, ctx.STATIC_DRAW);
+                ARE.GLMatrix.mat4.ortho(0, ctx.viewportWidth, ctx.viewportHeight, 0, -this.MAX_DEPTH, this.MAX_DEPTH, surface.orthMatrix);
+                ctx.viewport(0, 0, ctx.viewportWidth, ctx.viewportHeight);
+                ctx.colorMask(true, true, true, true);
+                ctx.blendFuncSeparate(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA, ctx.SRC_ALPHA, ctx.ONE);
+                ctx.enable(ctx.BLEND);
+                ctx.disable(ctx.DEPTH_TEST);
+                surface.init = true;
+            },
+            "_initTexture": function (src, ctx) {
+                if (!src) {
+                    return;
+                }
+                var textures = this._textures;
+                var textureCount = this._cacheTextures.length + this._textures.length;
+                for (var i = 0, l = textures.length; i < l; i++) {
+                    if (textures[i].image == src) {
+                        src.glTexture = textures[i];
+                        return i;
+                    }
+                }
+                if (!src.glTexture) {
+                    src.glTexture = ctx.createTexture();
+                    src.glTexture.image = src;
+                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
+                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
+                    ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, src.glTexture.image);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+                } else {
+                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
+                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
+                }
+                ctx.uniform1i(ctx.getUniformLocation(ctx.canvas.shader, "uSampler" + textureCount.toString()), textureCount);
+                textures.push(src.glTexture);
+                return textureCount;
+            },
+            "_initCache": function (o, src, ctx) {
+                if (!src) {
+                    return;
+                }
+                var textures = this._cacheTextures;
+                var textureCount = this._textures.length;
+                for (var i = 0, l = textures.length; i < l; i++) {
+                    if (o.cacheID && textures[i]._cacheID == o.cacheID) {
+                        textures[i]._isUsed = true;
+                        src.glTexture = textures[i];
+                        ctx.activeTexture(ctx["TEXTURE" + textureCount]);
+                        ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
+                        this._textures.push(src.glTexture);
+                        return i;
+                    }
+                }
+                if (!src.glTexture) {
+                    src.glTexture = ctx.createTexture();
+                    src.glTexture.image = src;
+                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
+                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
+                    ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, src.glTexture.image);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+                    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+                } else {
+                    ctx.activeTexture(ctx["TEXTURE" + textureCount]);
+                    ctx.bindTexture(ctx.TEXTURE_2D, src.glTexture);
+                }
+                ctx.uniform1i(ctx.getUniformLocation(ctx.canvas.shader, "uSampler" + textureCount.toString()), textureCount);
+                src._cacheID = o.cacheID;
+                src.glTexture._isUsed = true;
+                this._textures.push(src.glTexture);
+                textures.push(src.glTexture);
+                return textureCount;
+            },
+            "render": function (displayObject, surface) {
+                displayObject = displayObject || this.root;
+                surface = surface || this.surface;
+                var ctx = surface.ctx;
+                if (this.snapToPixel) {
+                    ctx.uniform1i(surface.shader.snapToUniform, 1);
+                } else {
+                    ctx.uniform1i(surface.shader.snapToUniform, 0);
+                }
+                ARE.GLMatrix.mat4.identity(surface.idMatrix);
+                ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
+                ctx.uniformMatrix4fv(surface.shader.orthMatrixUniform, false, surface.orthMatrix);
+                if (!surface.init) {
+                    this.initSurface(surface);
+                }
+                if (displayObject && surface) {
+                    var docFrag = document.createDocumentFragment();
+                    this._render(ctx, displayObject, surface.idMatrix, docFrag);
+                    this._draw(ctx);
+                }
+                this._cleanCache();
+            },
+            "_getCompositeOperation": function (o) {
+                if (o.compositeOperation) return o.compositeOperation;
+                if (o.parent) return this._getCompositeOperation(o.parent);
+            },
+            "_render": function (ctx, o, matrix, docFrag) {
+                var mat4 = ARE.GLMatrix.mat4;
+                if (!o.isVisible()) {
+                    return;
+                }
+                var testLength = (this._index + 4) * this._vertexDataCount;
+                if (this.vertices.length < testLength) {
+                    this._draw(ctx);
+                }
+                var uFrame = 0,
+                    vFrame = 0,
+                    u = 1,
+                    v = 1,
+                    img = 0;
+                var degToRad = this._degToRad;
+                var mvMatrix = this._getMat4();
+                var samplerID = 0;
+                var compositeOperation = this._getCompositeOperation(o);
+                if (compositeOperation === "lighter") {
+                    ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE);
+                } else {
+                    ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
+                }
+                var mmyCanvas = o.cacheCanvas || o.txtCanvas;
+                if (mmyCanvas) {
+                    samplerID = this._initCache(o, mmyCanvas, ctx);
+                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
+                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
+                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
+                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
+                    mat4.scale(mvMatrix, [o.scaleX * mmyCanvas.width, o.scaleY * mmyCanvas.height, 1]);
+                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
+                } else if (o instanceof ARE.Container) {
+                    var list = o.children.slice(0);
+                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
+                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
+                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
+                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
+                    mat4.scale(mvMatrix, [o.scaleX, o.scaleY, 1]);
+                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
+                    for (var i = 0, l = list.length; i < l; i++) {
+                        this._render(ctx, list[i], mvMatrix);
+                    }
+                    this._poolMat4(mvMatrix);
+                    return;
+                } else if (o instanceof ARE.Bitmap || o instanceof ARE.Sprite) {
+                    var rect = o.rect;
+                    img = o.img;
+                    samplerID = this._initTexture(img, ctx);
+                    u = rect[2] / img.width;
+                    v = rect[3] / img.height;
+                    uFrame = rect[0] / img.width;
+                    vFrame = rect[1] / img.height;
+                    mat4.translate(matrix, [o.x, o.y, 0], mvMatrix);
+                    mat4.rotateX(mvMatrix, o.skewX * degToRad);
+                    mat4.rotateY(mvMatrix, o.skewY * degToRad);
+                    mat4.rotateZ(mvMatrix, o.rotation * degToRad);
+                    mat4.scale(mvMatrix, [o.scaleX * rect[2], o.scaleY * rect[3], 1]);
+                    mat4.translate(mvMatrix, [-o.originX, -o.originY, 0]);
+                }
+                var pos1 = mat4.multiplyVec3(mvMatrix, [0, 0, 0]);
+                var pos2 = mat4.multiplyVec3(mvMatrix, [0, 1, 0]);
+                var pos3 = mat4.multiplyVec3(mvMatrix, [1, 1, 0]);
+                var pos4 = mat4.multiplyVec3(mvMatrix, [1, 0, 0]);
+                var alpha = o.alpha;
+                this.vertices.set([pos1[0], pos1[1], pos1[2], uFrame, vFrame, samplerID, alpha, pos2[0], pos2[1], pos2[2], uFrame, vFrame + v, samplerID, alpha, pos3[0], pos3[1], pos3[2], uFrame + u, vFrame + v, samplerID, alpha, pos4[0], pos4[1], pos4[2], uFrame + u, vFrame, samplerID, alpha], this._index * this._vertexDataCount);
+                this._index += 4;
+                this._poolMat4(mvMatrix);
+                if (this._textures.length + this._cacheTextures.length > 31) {
+                    this._draw(ctx);
+                }
+            },
+            "_draw": function (ctx) {
+                ctx.bufferSubData(ctx.ARRAY_BUFFER, 0, this.vertices.subarray(0, this._index * this._vertexDataCount));
+                ctx.drawElements(ctx.TRIANGLES, this._index * 1.5, ctx.UNSIGNED_SHORT, 0);
+                this._index = 0;
+                this._textureCount = 0;
+                this._textures = [];
+            },
+            "_cleanCache": function () {
+                var textures = this._cacheTextures;
+                for (var i = 0, l = textures.length; i < l; i++) {
+                    if (!textures[i]._isUsed) {
+                        textures.splice(i, 1);
+                        i--;
+                        l--;
+                    } else {
+                        textures[i]._isUsed = false;
+                    }
+                }
+            },
+            "_getMat4": function () {
+                if (this._matPool.length > 0) {
+                    return this._matPool.pop();
+                } else {
+                    return ARE.GLMatrix.mat4.create();
+                }
+            },
+            "_poolMat4": function (mat) {
+                this._matPool.push(mat);
+            },
+            "update": function () {
+                this.clear();
+                if (this.tickOnUpdate) {
+                    this.tickDisplayList(this.root, this.arguments);
+                }
+                this.render(this.root, this.surface);
+            },
+            "updateCache": function (ctx, o, w, h) {
+                ctx.clearRect(0, 0, w + 1, h + 1);
+                this.renderCache(ctx, o);
+            },
+            "renderCache": function (ctx, o) {
+                if (!o.isVisible()) {
+                    return;
+                }
+                if (o instanceof ARE.Container || o instanceof ARE.Stage) {
+                    var list = o.children.slice(0);
+                    for (var i = 0, l = list.length; i < l; i++) {
+                        ctx.save();
+                        this.canvasRenderer.render(ctx, list[i]);
+                        ctx.restore();
+                    }
+                } else if (o instanceof ARE.Bitmap || o instanceof ARE.Sprite) {
+                    var rect = o.rect;
+                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
+                } else if (o instanceof ARE.Shape) {
+                    for (var i = 0, len = o.cmds.length; i < len; i++) {
+                        var cmd = o.cmds[i];
+                        if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
+                            ctx[cmd[0]] = cmd[1][0];
+                        } else {
+                            ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
+                        }
+                    }
+                }
+            }
+        });
+
+        //end-------------------ARE.WebGLRenderer---------------------end
+
+        //begin-------------------ARE.FPS---------------------begin
+
+        ARE.FPS = __class.extend({
+            "statics": {
+                "get": function () {
+                    if (!this.instance) this.instance = new this();
+                    this.instance._computeFPS();
+                    return this.instance.value;
+                }
+            },
+            "ctor": function () {
+                this.last = new Date();
+                this.current = null;
+                this.value = 0;
+                this.fpsList = [];
+                var self = this;
+                ARE.RAF.requestInterval(function () {
+                    var lastIndex = self.fpsList.length - 1;
+                    self.value = self.fpsList[lastIndex];
+                    if (lastIndex > 500) {
+                        self.fpsList.shift();
+                    }
+                }, 200);
+            },
+            "_computeFPS": function () {
+                this.current = new Date();
+                this.fpsList.push(parseInt(1e3 / (this.current - this.last)));
+                this.last = this.current;
+            }
+        });
+
+        //end-------------------ARE.FPS---------------------end
+
+        //begin-------------------ARE.RAF---------------------begin
+
+        ARE.RAF = __class.extend({
+            "statics": {
+                "ctor": function () {
+                    var requestAnimFrame = function () {
+                        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+                        function (callback, element) {
+                            window.setTimeout(callback, 1e3 / 60);
+                        };
+                    }();
+                    var requestInterval = function (fn, delay) {
+                        if (!window.requestAnimationFrame && !window.webkitRequestAnimationFrame && !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame) && !window.oRequestAnimationFrame && !window.msRequestAnimationFrame) return window.setInterval(fn, delay);
+                        var start = new Date().getTime(),
+                            handle = new Object();
+
+                        function loop() {
+                            var current = new Date().getTime(),
+                                delta = current - start;
+                            if (delta >= delay) {
+                                fn.call();
+                                start = new Date().getTime();
+                            }
+                            handle.value = requestAnimFrame(loop);
+                        }
+                        handle.value = requestAnimFrame(loop);
+                        return handle;
+                    };
+                    var clearRequestInterval = function (handle) {
+                        if (handle) {
+                            setTimeout(function () {
+                                window.cancelAnimationFrame ? window.cancelAnimationFrame(handle.value) : window.webkitCancelAnimationFrame ? window.webkitCancelAnimationFrame(handle.value) : window.webkitCancelRequestAnimationFrame ? window.webkitCancelRequestAnimationFrame(handle.value) : window.mozCancelRequestAnimationFrame ? window.mozCancelRequestAnimationFrame(handle.value) : window.oCancelRequestAnimationFrame ? window.oCancelRequestAnimationFrame(handle.value) : window.msCancelRequestAnimationFrame ? window.msCancelRequestAnimationFrame(handle.value) : clearInterval(handle);
+                            }, 0);
+                        }
+                    };
+                    this.requestInterval = requestInterval;
+                    this.clearRequestInterval = clearRequestInterval;
+                }
+            }
+        });
+
+        //end-------------------ARE.RAF---------------------end
+
+        //begin-------------------ARE.Particle---------------------begin
+
+        ARE.Particle = ARE.Bitmap.extend({
+            "ctor": function (option) {
+                this._super(option.texture);
+                this.position = option.position;
+                this.x = this.position.x;
+                this.y = this.position.y;
+                this.rotation = option.rotation || 0;
+                this.velocity = option.velocity;
+                this.acceleration = option.acceleration || new ARE.Vector2(0, 0);
+                this.rotatingSpeed = option.rotatingSpeed || 0;
+                this.rotatingAcceleration = option.rotatingAcceleration || 0;
+                this.hideSpeed = option.hideSpeed || .01;
+                this.zoomSpeed = option.hideSpeed || .01;
+                this.isAlive = true;
+                this.setFilter.apply(this, option.filter);
+            },
+            "tick": function () {
+                this.velocity.add(this.acceleration);
+                this.position.add(this.velocity.multiply(.1));
+                this.rotatingSpeed += this.rotatingAcceleration;
+                this.rotation += this.rotatingSpeed;
+                this.alpha -= this.hideSpeed;
+                this.x = this.position.x;
+                this.y = this.position.y;
+                this.alpha = this.alpha;
+            }
+        });
+
+        //end-------------------ARE.Particle---------------------end
 
         //begin-------------------ARE.GLMatrix---------------------begin
 
@@ -2290,305 +2597,12 @@
                     };
                     this.mat4 = mat4;
                     this.quat4 = quat4;
+                    this.vec3 = vec3;
                 }
             }
         });
 
         //end-------------------ARE.GLMatrix---------------------end
-
-        //begin-------------------ARE.RAF---------------------begin
-
-        ARE.RAF = __class.extend({
-            "statics": {
-                "ctor": function () {
-                    var requestAnimFrame = function () {
-                        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-                        function (callback, element) {
-                            window.setTimeout(callback, 1e3 / 60);
-                        };
-                    }();
-                    var requestInterval = function (fn, delay) {
-                        if (!window.requestAnimationFrame && !window.webkitRequestAnimationFrame && !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame) && !window.oRequestAnimationFrame && !window.msRequestAnimationFrame) return window.setInterval(fn, delay);
-                        var start = new Date().getTime(),
-                            handle = new Object();
-
-                        function loop() {
-                            var current = new Date().getTime(),
-                                delta = current - start;
-                            if (delta >= delay) {
-                                fn.call();
-                                start = new Date().getTime();
-                            }
-                            handle.value = requestAnimFrame(loop);
-                        }
-                        handle.value = requestAnimFrame(loop);
-                        return handle;
-                    };
-                    var clearRequestInterval = function (handle) {
-                        if (handle) {
-                            setTimeout(function () {
-                                window.cancelAnimationFrame ? window.cancelAnimationFrame(handle.value) : window.webkitCancelAnimationFrame ? window.webkitCancelAnimationFrame(handle.value) : window.webkitCancelRequestAnimationFrame ? window.webkitCancelRequestAnimationFrame(handle.value) : window.mozCancelRequestAnimationFrame ? window.mozCancelRequestAnimationFrame(handle.value) : window.oCancelRequestAnimationFrame ? window.oCancelRequestAnimationFrame(handle.value) : window.msCancelRequestAnimationFrame ? window.msCancelRequestAnimationFrame(handle.value) : clearInterval(handle);
-                            }, 0);
-                        }
-                    };
-                    this.requestInterval = requestInterval;
-                    this.clearRequestInterval = clearRequestInterval;
-                }
-            }
-        });
-
-        //end-------------------ARE.RAF---------------------end
-
-        //begin-------------------ARE.CanvasRenderer---------------------begin
-
-        ARE.CanvasRenderer = __class.extend({
-            "ctor": function (stage) {
-                this.stage = stage;
-                this.ctx = stage.ctx;
-                this.height = stage.width;
-                this.width = stage.height;
-            },
-            "update": function () {
-                this.ctx.clearRect(0, 0, this.height, this.width);
-                this.render(this.ctx, this.stage);
-            },
-            "render": function (ctx, o, mtx) {
-                if (!o.isVisible()) {
-                    return;
-                }
-                if (mtx) {
-                    o._matrix.reinitialize(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx, mtx.ty, mtx.alpha, mtx.shadow, mtx.compositeOperation);
-                } else {
-                    o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
-                }
-                mtx = o._matrix;
-                mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
-                var a = ctx.globalAlpha,
-                    cp = ctx.globalCompositeOperation;
-                ctx.globalAlpha *= o.alpha;
-                ctx.globalCompositeOperation = o.compositeOperation;
-                var mmyCanvas = o.cacheCanvas || o.txtCanvas;
-                if (mmyCanvas) {
-                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
-                    ctx.drawImage(mmyCanvas, 0, 0);
-                } else if (o instanceof ARE.Bitmap) {
-                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
-                    ctx.drawImage(o.img, 0, 0);
-                } else if (o instanceof ARE.Container || o instanceof ARE.Stage) {
-                    var list = o.children.slice(0);
-                    for (var i = 0, l = list.length; i < l; i++) {
-                        ctx.save();
-                        this.render(ctx, list[i], mtx);
-                        ctx.restore();
-                    }
-                } else if (o instanceof ARE.Sprite) {
-                    var rect = o._rect;
-                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
-                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-                } else if (o instanceof ARE.Shape) {
-                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
-                    for (var i = 0, len = o.cmds.length; i < len; i++) {
-                        var cmd = o.cmds[i];
-                        if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
-                            ctx[cmd[0]] = cmd[1][0];
-                        } else {
-                            ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
-                        }
-                    }
-                }
-                ctx.globalAlpha = a;
-                ctx.globalCompositeOperation = cp;
-            },
-            "hitRender": function (ctx, o, mtx, x, y, type) {
-                ctx.clearRect(0, 0, 2, 2);
-                if (mtx) {
-                    o._matrix.reinitialize(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx, mtx.ty, mtx.alpha, mtx.shadow, mtx.compositeOperation);
-                } else {
-                    o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
-                }
-                mtx = o._matrix;
-                mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
-                var list = o.children.slice(0),
-                    l = list.length;
-                for (var i = l - 1; i >= 0; i--) {
-                    var child = list[i];
-                    mtx.reinitialize(1, 0, 0, 1, 0, 0);
-                    mtx.appendTransform(o.x - x, o.y - y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
-                    ctx.save();
-                    var child = list[i];
-                    this._hitRender(ctx, list[i], mtx, type);
-                    ctx.restore();
-                    if (ctx.getImageData(0, 0, 1, 1).data[3] > 1) {
-                        child.execEvent(type);
-                        return child;
-                    }
-                }
-            },
-            "_hitRender": function (ctx, o, mtx, type) {
-                if (!o.isVisible()) {
-                    return;
-                }
-                if (mtx) {
-                    o._matrix.reinitialize(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx, mtx.ty, mtx.alpha, mtx.shadow, mtx.compositeOperation);
-                } else {
-                    o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
-                }
-                mtx = o._matrix;
-                mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
-                var a = ctx.globalAlpha;
-                ctx.globalAlpha *= o.alpha;
-                if (o instanceof ARE.Bitmap || o.cacheCanvas) {
-                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
-                    ctx.drawImage(o.cacheCanvas || o.img, 0, 0);
-                } else if (o instanceof ARE.Container) {
-                    var list = o.children.slice(0),
-                        l = list.length;
-                    for (var i = l - 1; i >= 0; i--) {
-                        var child = list[i];
-                        ctx.save();
-                        var child = list[i];
-                        this._hitRender(ctx, list[i], mtx);
-                        ctx.restore();
-                        if (ctx.getImageData(0, 0, 1, 1).data[3] > 1) {
-                            child.execEvent(type);
-                        }
-                    }
-                } else if (o instanceof ARE.Sprite) {
-                    var rect = o._rect;
-                    ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + .5 | 0, mtx.ty + .5 | 0);
-                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-                }
-                ctx.globalAlpha = a;
-            },
-            "updateCache": function (ctx, o, w, h) {
-                ctx.clearRect(0, 0, w + 1, h + 1);
-                this.renderCache(ctx, o);
-            },
-            "renderCache": function (ctx, o) {
-                if (!o.isVisible()) {
-                    return;
-                }
-                if (o instanceof ARE.Bitmap) {
-                    ctx.drawImage(o.img, 0, 0);
-                } else if (o instanceof ARE.Container || o instanceof ARE.Stage) {
-                    var list = o.children.slice(0);
-                    for (var i = 0, l = list.length; i < l; i++) {
-                        ctx.save();
-                        this.renderCache(ctx, list[i]);
-                        ctx.restore();
-                    }
-                } else if (o instanceof ARE.Sprite) {
-                    var rect = o._rect;
-                    ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-                } else if (o instanceof ARE.Shape) {
-                    for (var i = 0, len = o.cmds.length; i < len; i++) {
-                        var cmd = o.cmds[i];
-                        if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
-                            ctx[cmd[0]] = cmd[1][0];
-                        } else {
-                            ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
-                        }
-                    }
-                }
-            }
-        });
-
-        //end-------------------ARE.CanvasRenderer---------------------end
-
-        //begin-------------------ARE.UID---------------------begin
-
-        ARE.UID = __class.extend({
-            "statics": {
-                "_nextID": 0,
-                "get": function () {
-                    return this._nextID++;
-                }
-            }
-        });
-
-        //end-------------------ARE.UID---------------------end
-
-        //begin-------------------ARE.FPS---------------------begin
-
-        ARE.FPS = __class.extend({
-            "statics": {
-                "get": function () {
-                    if (!this.instance) this.instance = new this();
-                    this.instance._computeFPS();
-                    return this.instance.value;
-                }
-            },
-            "ctor": function () {
-                this.last = new Date();
-                this.current = null;
-                this.value = 0;
-                this.fpsList = [];
-                var self = this;
-                ARE.RAF.requestInterval(function () {
-                    var lastIndex = self.fpsList.length - 1;
-                    self.value = self.fpsList[lastIndex];
-                    if (lastIndex > 500) {
-                        self.fpsList.shift();
-                    }
-                }, 200);
-                this.execList = [];
-            },
-            "exec": function (fn, fps) {
-                for (var i = 0, len = this.execList.length; i < len; i++) {
-                    var item = this.execList[i];
-                    if (fn === item["fn"] && fps === item["fps"]) {
-                        return;
-                    }
-                }
-                var loop = ARE.RAF.requestInterval(function () {
-                    fn();
-                }, 1e3 / fps);
-                this.execList.push({
-                    fn: fn,
-                    fps: fps,
-                    loop: loop
-                });
-            },
-            "_computeFPS": function () {
-                this.current = new Date();
-                this.fpsList.push(parseInt(1e3 / (this.current - this.last)));
-                this.last = this.current;
-            }
-        });
-
-        //end-------------------ARE.FPS---------------------end
-
-        //begin-------------------ARE.Particle---------------------begin
-
-        ARE.Particle = ARE.Bitmap.extend({
-            "ctor": function (option) {
-                this._super(option.texture);
-                this.position = option.position;
-                this.x = this.position.x;
-                this.y = this.position.y;
-                this.rotation = option.rotation || 0;
-                this.velocity = option.velocity;
-                this.acceleration = option.acceleration || new ARE.Vector2(0, 0);
-                this.rotatingSpeed = option.rotatingSpeed || 0;
-                this.rotatingAcceleration = option.rotatingAcceleration || 0;
-                this.hideSpeed = option.hideSpeed || .01;
-                this.zoomSpeed = option.hideSpeed || .01;
-                this.isAlive = true;
-                this.setFilter.apply(this, option.filter);
-            },
-            "tick": function () {
-                this.velocity.add(this.acceleration);
-                this.position.add(this.velocity.multiply(.1));
-                this.rotatingSpeed += this.rotatingAcceleration;
-                this.rotation += this.rotatingSpeed;
-                this.alpha -= this.hideSpeed;
-                this.x = this.position.x;
-                this.y = this.position.y;
-                this.alpha = this.alpha;
-            }
-        });
-
-        //end-------------------ARE.Particle---------------------end
 
         //begin-------------------ARE.Util---------------------begin
 
@@ -2601,50 +2615,6 @@
         });
 
         //end-------------------ARE.Util---------------------end
-
-        //begin-------------------ARE.Vector2---------------------begin
-
-        ARE.Vector2 = __class.extend({
-            "ctor": function (x, y) {
-                this.x = x;
-                this.y = y;
-            },
-            "copy": function () {
-                return new ARE.Vector2(this.x, this.y);
-            },
-            "length": function () {
-                return Math.sqrt(this.x * this.x + this.y * this.y);
-            },
-            "sqrLength": function () {
-                return this.x * this.x + this.y * this.y;
-            },
-            "normalize": function () {
-                var inv = 1 / this.length();
-                return new ARE.Vector2(this.x * inv, this.y * inv);
-            },
-            "negate": function () {
-                return new ARE.Vector2(-this.x, -this.y);
-            },
-            "add": function (v) {
-                this.x += v.x,
-                this.y += v.y;
-            },
-            "subtract": function (v) {
-                return new ARE.Vector2(this.x - v.x, this.y - v.y);
-            },
-            "multiply": function (f) {
-                return new ARE.Vector2(this.x * f, this.y * f);
-            },
-            "divide": function (f) {
-                var invf = 1 / f;
-                return new ARE.Vector2(this.x * invf, this.y * invf);
-            },
-            "dot": function (v) {
-                return this.x * v.x + this.y * v.y;
-            }
-        });
-
-        //end-------------------ARE.Vector2---------------------end
 
         //begin-------------------ARE.ParticleSystem---------------------begin
 
@@ -2707,31 +2677,718 @@
                         }
                     }
                 }
-            },
-            "setAngle": function (angle) {
-                this.angle = angle;
-            },
-            "setSpeed": function (speed) {
-                this.speed = speed;
-            },
-            "setFilter": function (r, g, b, a) {
-                this.filter = [r, g, b, a];
-            },
-            "setAngleRange": function (angle) {
-                this.angleRange = angle;
-            },
-            "setEmitWidth": function (w) {
-                this.emitArea[0] = w;
-            },
-            "setEmitHeight": function (h) {
-                this.emitArea[1] = h;
-            },
-            "setGravity": function (g) {
-                this.gravity = g;
             }
         });
 
         //end-------------------ARE.ParticleSystem---------------------end
+
+        //begin-------------------ARE.Vector2---------------------begin
+
+        ARE.Vector2 = __class.extend({
+            "ctor": function (x, y) {
+                this.x = x;
+                this.y = y;
+            },
+            "copy": function () {
+                return new ARE.Vector2(this.x, this.y);
+            },
+            "length": function () {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            },
+            "sqrLength": function () {
+                return this.x * this.x + this.y * this.y;
+            },
+            "normalize": function () {
+                var inv = 1 / this.length();
+                return new ARE.Vector2(this.x * inv, this.y * inv);
+            },
+            "negate": function () {
+                return new ARE.Vector2(-this.x, -this.y);
+            },
+            "add": function (v) {
+                this.x += v.x,
+                this.y += v.y;
+            },
+            "subtract": function (v) {
+                return new ARE.Vector2(this.x - v.x, this.y - v.y);
+            },
+            "multiply": function (f) {
+                return new ARE.Vector2(this.x * f, this.y * f);
+            },
+            "divide": function (f) {
+                var invf = 1 / f;
+                return new ARE.Vector2(this.x * invf, this.y * invf);
+            },
+            "dot": function (v) {
+                return this.x * v.x + this.y * v.y;
+            }
+        });
+
+        //end-------------------ARE.Vector2---------------------end
+
+        //begin-------------------ARE.Keyboard---------------------begin
+
+        ARE.Keyboard = __class.extend({
+            "statics": {
+                "ctor": function () {
+                    var KeyboardJS = {},
+                        locales = {},
+                        locale, map, macros, activeKeys = [],
+                        bindings = [],
+                        activeBindings = [],
+                        activeMacros = [],
+                        aI, usLocale;
+                    usLocale = {
+                        map: {
+                            "3": ["cancel"],
+                            "8": ["backspace"],
+                            "9": ["tab"],
+                            "12": ["clear"],
+                            "13": ["enter"],
+                            "16": ["shift"],
+                            "17": ["ctrl"],
+                            "18": ["alt", "menu"],
+                            "19": ["pause", "break"],
+                            "20": ["capslock"],
+                            "27": ["escape", "esc"],
+                            "32": ["space", "spacebar"],
+                            "33": ["pageup"],
+                            "34": ["pagedown"],
+                            "35": ["end"],
+                            "36": ["home"],
+                            "37": ["left"],
+                            "38": ["up"],
+                            "39": ["right"],
+                            "40": ["down"],
+                            "41": ["select"],
+                            "42": ["printscreen"],
+                            "43": ["execute"],
+                            "44": ["snapshot"],
+                            "45": ["insert", "ins"],
+                            "46": ["delete", "del"],
+                            "47": ["help"],
+                            "91": ["command", "windows", "win", "super", "leftcommand", "leftwindows", "leftwin", "leftsuper"],
+                            "92": ["command", "windows", "win", "super", "rightcommand", "rightwindows", "rightwin", "rightsuper"],
+                            "145": ["scrolllock", "scroll"],
+                            "186": ["semicolon", ";"],
+                            "187": ["equal", "equalsign", "="],
+                            "188": ["comma", ","],
+                            "189": ["dash", "-"],
+                            "190": ["period", "."],
+                            "191": ["slash", "forwardslash", "/"],
+                            "192": ["graveaccent", "`"],
+                            "219": ["openbracket", "["],
+                            "220": ["backslash", "\\"],
+                            "221": ["closebracket", "]"],
+                            "222": ["apostrophe", "'"],
+                            "48": ["zero", "0"],
+                            "49": ["one", "1"],
+                            "50": ["two", "2"],
+                            "51": ["three", "3"],
+                            "52": ["four", "4"],
+                            "53": ["five", "5"],
+                            "54": ["six", "6"],
+                            "55": ["seven", "7"],
+                            "56": ["eight", "8"],
+                            "57": ["nine", "9"],
+                            "96": ["numzero", "num0"],
+                            "97": ["numone", "num1"],
+                            "98": ["numtwo", "num2"],
+                            "99": ["numthree", "num3"],
+                            "100": ["numfour", "num4"],
+                            "101": ["numfive", "num5"],
+                            "102": ["numsix", "num6"],
+                            "103": ["numseven", "num7"],
+                            "104": ["numeight", "num8"],
+                            "105": ["numnine", "num9"],
+                            "106": ["nummultiply", "num*"],
+                            "107": ["numadd", "num+"],
+                            "108": ["numenter"],
+                            "109": ["numsubtract", "num-"],
+                            "110": ["numdecimal", "num."],
+                            "111": ["numdivide", "num/"],
+                            "144": ["numlock", "num"],
+                            "112": ["f1"],
+                            "113": ["f2"],
+                            "114": ["f3"],
+                            "115": ["f4"],
+                            "116": ["f5"],
+                            "117": ["f6"],
+                            "118": ["f7"],
+                            "119": ["f8"],
+                            "120": ["f9"],
+                            "121": ["f10"],
+                            "122": ["f11"],
+                            "123": ["f12"]
+                        },
+                        macros: [["shift + `", ["tilde", "~"]], ["shift + 1", ["exclamation", "exclamationpoint", "!"]], ["shift + 2", ["at", "@"]], ["shift + 3", ["number", "#"]], ["shift + 4", ["dollar", "dollars", "dollarsign", "$"]], ["shift + 5", ["percent", "%"]], ["shift + 6", ["caret", "^"]], ["shift + 7", ["ampersand", "and", "&"]], ["shift + 8", ["asterisk", "*"]], ["shift + 9", ["openparen", "("]], ["shift + 0", ["closeparen", ")"]], ["shift + -", ["underscore", "_"]], ["shift + =", ["plus", "+"]], ["shift + (", ["opencurlybrace", "opencurlybracket", "{"]], ["shift + )", ["closecurlybrace", "closecurlybracket", "}"]], ["shift + \\", ["verticalbar", "|"]], ["shift + ;", ["colon", ":"]], ["shift + '", ["quotationmark", '"']], ["shift + !,", ["openanglebracket", "<"]], ["shift + .", ["closeanglebracket", ">"]], ["shift + /", ["questionmark", "?"]]]
+                    };
+                    for (aI = 65; aI <= 90; aI += 1) {
+                        usLocale.map[aI] = String.fromCharCode(aI + 32);
+                        usLocale.macros.push(["shift + " + String.fromCharCode(aI + 32) + ", capslock + " + String.fromCharCode(aI + 32), [String.fromCharCode(aI)]]);
+                    }
+                    registerLocale("us", usLocale);
+                    getSetLocale("us");
+                    enable();
+                    KeyboardJS.enable = enable;
+                    KeyboardJS.disable = disable;
+                    KeyboardJS.activeKeys = getActiveKeys;
+                    KeyboardJS.releaseKey = removeActiveKey;
+                    KeyboardJS.pressKey = addActiveKey;
+                    KeyboardJS.on = createBinding;
+                    KeyboardJS.clear = removeBindingByKeyCombo;
+                    KeyboardJS.clear.key = removeBindingByKeyName;
+                    KeyboardJS.locale = getSetLocale;
+                    KeyboardJS.locale.register = registerLocale;
+                    KeyboardJS.macro = createMacro;
+                    KeyboardJS.macro.remove = removeMacro;
+                    KeyboardJS.key = {};
+                    KeyboardJS.key.name = getKeyName;
+                    KeyboardJS.key.code = getKeyCode;
+                    KeyboardJS.combo = {};
+                    KeyboardJS.combo.active = isSatisfiedCombo;
+                    KeyboardJS.combo.parse = parseKeyCombo;
+                    KeyboardJS.combo.stringify = stringifyKeyCombo;
+
+                    function enable() {
+                        if (window.addEventListener) {
+                            window.document.addEventListener("keydown", keydown, false);
+                            window.document.addEventListener("keyup", keyup, false);
+                            window.addEventListener("blur", reset, false);
+                            window.addEventListener("webkitfullscreenchange", reset, false);
+                            window.addEventListener("mozfullscreenchange", reset, false);
+                        } else if (window.attachEvent) {
+                            window.document.attachEvent("onkeydown", keydown);
+                            window.document.attachEvent("onkeyup", keyup);
+                            window.attachEvent("onblur", reset);
+                        }
+                    }
+                    function disable() {
+                        reset();
+                        if (window.removeEventListener) {
+                            window.document.removeEventListener("keydown", keydown, false);
+                            window.document.removeEventListener("keyup", keyup, false);
+                            window.removeEventListener("blur", reset, false);
+                            window.removeEventListener("webkitfullscreenchange", reset, false);
+                            window.removeEventListener("mozfullscreenchange", reset, false);
+                        } else if (window.detachEvent) {
+                            window.document.detachEvent("onkeydown", keydown);
+                            window.document.detachEvent("onkeyup", keyup);
+                            window.detachEvent("onblur", reset);
+                        }
+                    }
+                    function reset(event) {
+                        activeKeys = [];
+                        pruneMacros();
+                        pruneBindings(event);
+                    }
+                    function keydown(event) {
+                        var keyNames, keyName, kI;
+                        keyNames = getKeyName(event.keyCode);
+                        if (keyNames.length < 1) {
+                            return;
+                        }
+                        event.isRepeat = false;
+                        for (kI = 0; kI < keyNames.length; kI += 1) {
+                            keyName = keyNames[kI];
+                            if (getActiveKeys().indexOf(keyName) != -1) event.isRepeat = true;
+                            addActiveKey(keyName);
+                        }
+                        executeMacros();
+                        executeBindings(event);
+                    }
+                    function keyup(event) {
+                        var keyNames, kI;
+                        keyNames = getKeyName(event.keyCode);
+                        if (keyNames.length < 1) {
+                            return;
+                        }
+                        for (kI = 0; kI < keyNames.length; kI += 1) {
+                            removeActiveKey(keyNames[kI]);
+                        }
+                        pruneMacros();
+                        pruneBindings(event);
+                    }
+                    function getKeyName(keyCode) {
+                        return map[keyCode] || [];
+                    }
+                    function getKeyCode(keyName) {
+                        var keyCode;
+                        for (keyCode in map) {
+                            if (!map.hasOwnProperty(keyCode)) {
+                                continue;
+                            }
+                            if (map[keyCode].indexOf(keyName) > -1) {
+                                return keyCode;
+                            }
+                        }
+                        return false;
+                    }
+                    function createMacro(combo, injectedKeys) {
+                        if (typeof combo !== "string" && (typeof combo !== "object" || typeof combo.push !== "function")) {
+                            throw new Error("Cannot create macro. The combo must be a string or array.");
+                        }
+                        if (typeof injectedKeys !== "object" || typeof injectedKeys.push !== "function") {
+                            throw new Error("Cannot create macro. The injectedKeys must be an array.");
+                        }
+                        macros.push([combo, injectedKeys]);
+                    }
+                    function removeMacro(combo) {
+                        var macro, mI;
+                        if (typeof combo !== "string" && (typeof combo !== "object" || typeof combo.push !== "function")) {
+                            throw new Error("Cannot remove macro. The combo must be a string or array.");
+                        }
+                        for (mI = 0; mI < macros.length; mI += 1) {
+                            macro = macros[mI];
+                            if (compareCombos(combo, macro[0])) {
+                                removeActiveKey(macro[1]);
+                                macros.splice(mI, 1);
+                                break;
+                            }
+                        }
+                    }
+                    function executeMacros() {
+                        var mI, combo, kI;
+                        for (mI = 0; mI < macros.length; mI += 1) {
+                            combo = parseKeyCombo(macros[mI][0]);
+                            if (activeMacros.indexOf(macros[mI]) === -1 && isSatisfiedCombo(combo)) {
+                                activeMacros.push(macros[mI]);
+                                for (kI = 0; kI < macros[mI][1].length; kI += 1) {
+                                    addActiveKey(macros[mI][1][kI]);
+                                }
+                            }
+                        }
+                    }
+                    function pruneMacros() {
+                        var mI, combo, kI;
+                        for (mI = 0; mI < activeMacros.length; mI += 1) {
+                            combo = parseKeyCombo(activeMacros[mI][0]);
+                            if (isSatisfiedCombo(combo) === false) {
+                                for (kI = 0; kI < activeMacros[mI][1].length; kI += 1) {
+                                    removeActiveKey(activeMacros[mI][1][kI]);
+                                }
+                                activeMacros.splice(mI, 1);
+                                mI -= 1;
+                            }
+                        }
+                    }
+                    function createBinding(keyCombo, keyDownCallback, keyUpCallback) {
+                        var api = {},
+                            binding, subBindings = [],
+                            bindingApi = {},
+                            kI, subCombo;
+                        if (typeof keyCombo === "string") {
+                            keyCombo = parseKeyCombo(keyCombo);
+                        }
+                        for (kI = 0; kI < keyCombo.length; kI += 1) {
+                            binding = {};
+                            subCombo = stringifyKeyCombo([keyCombo[kI]]);
+                            if (typeof subCombo !== "string") {
+                                throw new Error("Failed to bind key combo. The key combo must be string.");
+                            }
+                            binding.keyCombo = subCombo;
+                            binding.keyDownCallback = [];
+                            binding.keyUpCallback = [];
+                            if (keyDownCallback) {
+                                binding.keyDownCallback.push(keyDownCallback);
+                            }
+                            if (keyUpCallback) {
+                                binding.keyUpCallback.push(keyUpCallback);
+                            }
+                            bindings.push(binding);
+                            subBindings.push(binding);
+                        }
+                        api.clear = clear;
+                        api.on = on;
+                        return api;
+
+                        function clear() {
+                            var bI;
+                            for (bI = 0; bI < subBindings.length; bI += 1) {
+                                bindings.splice(bindings.indexOf(subBindings[bI]), 1);
+                            }
+                        }
+                        function on(eventName) {
+                            var api = {},
+                                callbacks, cI, bI;
+                            if (typeof eventName !== "string") {
+                                throw new Error("Cannot bind callback. The event name must be a string.");
+                            }
+                            if (eventName !== "keyup" && eventName !== "keydown") {
+                                throw new Error('Cannot bind callback. The event name must be a "keyup" or "keydown".');
+                            }
+                            callbacks = Array.prototype.slice.apply(arguments, [1]);
+                            for (cI = 0; cI < callbacks.length; cI += 1) {
+                                if (typeof callbacks[cI] === "function") {
+                                    if (eventName === "keyup") {
+                                        for (bI = 0; bI < subBindings.length; bI += 1) {
+                                            subBindings[bI].keyUpCallback.push(callbacks[cI]);
+                                        }
+                                    } else if (eventName === "keydown") {
+                                        for (bI = 0; bI < subBindings.length; bI += 1) {
+                                            subBindings[bI].keyDownCallback.push(callbacks[cI]);
+                                        }
+                                    }
+                                }
+                            }
+                            api.clear = clear;
+                            return api;
+
+                            function clear() {
+                                var cI, bI;
+                                for (cI = 0; cI < callbacks.length; cI += 1) {
+                                    if (typeof callbacks[cI] === "function") {
+                                        if (eventName === "keyup") {
+                                            for (bI = 0; bI < subBindings.length; bI += 1) {
+                                                subBindings[bI].keyUpCallback.splice(subBindings[bI].keyUpCallback.indexOf(callbacks[cI]), 1);
+                                            }
+                                        } else {
+                                            for (bI = 0; bI < subBindings.length; bI += 1) {
+                                                subBindings[bI].keyDownCallback.splice(subBindings[bI].keyDownCallback.indexOf(callbacks[cI]), 1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    function removeBindingByKeyCombo(keyCombo) {
+                        var bI, binding, keyName;
+                        for (bI = 0; bI < bindings.length; bI += 1) {
+                            binding = bindings[bI];
+                            if (compareCombos(keyCombo, binding.keyCombo)) {
+                                bindings.splice(bI, 1);
+                                bI -= 1;
+                            }
+                        }
+                    }
+                    function removeBindingByKeyName(keyName) {
+                        var bI, kI, binding;
+                        if (keyName) {
+                            for (bI = 0; bI < bindings.length; bI += 1) {
+                                binding = bindings[bI];
+                                for (kI = 0; kI < binding.keyCombo.length; kI += 1) {
+                                    if (binding.keyCombo[kI].indexOf(keyName) > -1) {
+                                        bindings.splice(bI, 1);
+                                        bI -= 1;
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            bindings = [];
+                        }
+                    }
+                    function executeBindings(event) {
+                        var bI, sBI, binding, bindingKeys, remainingKeys, cI, killEventBubble, kI, bindingKeysSatisfied, index, sortedBindings = [],
+                            bindingWeight;
+                        remainingKeys = [].concat(activeKeys);
+                        for (bI = 0; bI < bindings.length; bI += 1) {
+                            bindingWeight = extractComboKeys(bindings[bI].keyCombo).length;
+                            if (!sortedBindings[bindingWeight]) {
+                                sortedBindings[bindingWeight] = [];
+                            }
+                            sortedBindings[bindingWeight].push(bindings[bI]);
+                        }
+                        for (sBI = sortedBindings.length - 1; sBI >= 0; sBI -= 1) {
+                            if (!sortedBindings[sBI]) {
+                                continue;
+                            }
+                            for (bI = 0; bI < sortedBindings[sBI].length; bI += 1) {
+                                binding = sortedBindings[sBI][bI];
+                                bindingKeys = extractComboKeys(binding.keyCombo);
+                                bindingKeysSatisfied = true;
+                                for (kI = 0; kI < bindingKeys.length; kI += 1) {
+                                    if (remainingKeys.indexOf(bindingKeys[kI]) === -1) {
+                                        bindingKeysSatisfied = false;
+                                        break;
+                                    }
+                                }
+                                if (bindingKeysSatisfied && isSatisfiedCombo(binding.keyCombo)) {
+                                    activeBindings.push(binding);
+                                    for (kI = 0; kI < bindingKeys.length; kI += 1) {
+                                        index = remainingKeys.indexOf(bindingKeys[kI]);
+                                        if (index > -1) {
+                                            remainingKeys.splice(index, 1);
+                                            kI -= 1;
+                                        }
+                                    }
+                                    for (cI = 0; cI < binding.keyDownCallback.length; cI += 1) {
+                                        if (binding.keyDownCallback[cI](event, getActiveKeys(), binding.keyCombo) === false) {
+                                            killEventBubble = true;
+                                        }
+                                    }
+                                    if (killEventBubble === true) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    function pruneBindings(event) {
+                        var bI, cI, binding, killEventBubble;
+                        for (bI = 0; bI < activeBindings.length; bI += 1) {
+                            binding = activeBindings[bI];
+                            if (isSatisfiedCombo(binding.keyCombo) === false) {
+                                for (cI = 0; cI < binding.keyUpCallback.length; cI += 1) {
+                                    if (binding.keyUpCallback[cI](event, getActiveKeys(), binding.keyCombo) === false) {
+                                        killEventBubble = true;
+                                    }
+                                }
+                                if (killEventBubble === true) {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                }
+                                activeBindings.splice(bI, 1);
+                                bI -= 1;
+                            }
+                        }
+                    }
+                    function compareCombos(keyComboArrayA, keyComboArrayB) {
+                        var cI, sI, kI;
+                        keyComboArrayA = parseKeyCombo(keyComboArrayA);
+                        keyComboArrayB = parseKeyCombo(keyComboArrayB);
+                        if (keyComboArrayA.length !== keyComboArrayB.length) {
+                            return false;
+                        }
+                        for (cI = 0; cI < keyComboArrayA.length; cI += 1) {
+                            if (keyComboArrayA[cI].length !== keyComboArrayB[cI].length) {
+                                return false;
+                            }
+                            for (sI = 0; sI < keyComboArrayA[cI].length; sI += 1) {
+                                if (keyComboArrayA[cI][sI].length !== keyComboArrayB[cI][sI].length) {
+                                    return false;
+                                }
+                                for (kI = 0; kI < keyComboArrayA[cI][sI].length; kI += 1) {
+                                    if (keyComboArrayB[cI][sI].indexOf(keyComboArrayA[cI][sI][kI]) === -1) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    function isSatisfiedCombo(keyCombo) {
+                        var cI, sI, stage, kI, stageOffset = 0,
+                            index, comboMatches;
+                        keyCombo = parseKeyCombo(keyCombo);
+                        for (cI = 0; cI < keyCombo.length; cI += 1) {
+                            comboMatches = true;
+                            stageOffset = 0;
+                            for (sI = 0; sI < keyCombo[cI].length; sI += 1) {
+                                stage = [].concat(keyCombo[cI][sI]);
+                                for (kI = stageOffset; kI < activeKeys.length; kI += 1) {
+                                    index = stage.indexOf(activeKeys[kI]);
+                                    if (index > -1) {
+                                        stage.splice(index, 1);
+                                        stageOffset = kI;
+                                    }
+                                }
+                                if (stage.length !== 0) {
+                                    comboMatches = false;
+                                    break;
+                                }
+                            }
+                            if (comboMatches) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    function extractComboKeys(keyCombo) {
+                        var cI, sI, kI, keys = [];
+                        keyCombo = parseKeyCombo(keyCombo);
+                        for (cI = 0; cI < keyCombo.length; cI += 1) {
+                            for (sI = 0; sI < keyCombo[cI].length; sI += 1) {
+                                keys = keys.concat(keyCombo[cI][sI]);
+                            }
+                        }
+                        return keys;
+                    }
+                    function parseKeyCombo(keyCombo) {
+                        var s = keyCombo,
+                            i = 0,
+                            op = 0,
+                            ws = false,
+                            nc = false,
+                            combos = [],
+                            combo = [],
+                            stage = [],
+                            key = "";
+                        if (typeof keyCombo === "object" && typeof keyCombo.push === "function") {
+                            return keyCombo;
+                        }
+                        if (typeof keyCombo !== "string") {
+                            throw new Error('Cannot parse "keyCombo" because its type is "' + typeof keyCombo + '". It must be a "string".');
+                        }
+                        while (s.charAt(i) === " ") {
+                            i += 1;
+                        }
+                        while (true) {
+                            if (s.charAt(i) === " ") {
+                                while (s.charAt(i) === " ") {
+                                    i += 1;
+                                }
+                                ws = true;
+                            } else if (s.charAt(i) === ",") {
+                                if (op || nc) {
+                                    throw new Error("Failed to parse key combo. Unexpected , at character index " + i + ".");
+                                }
+                                nc = true;
+                                i += 1;
+                            } else if (s.charAt(i) === "+") {
+                                if (key.length) {
+                                    stage.push(key);
+                                    key = "";
+                                }
+                                if (op || nc) {
+                                    throw new Error("Failed to parse key combo. Unexpected + at character index " + i + ".");
+                                }
+                                op = true;
+                                i += 1;
+                            } else if (s.charAt(i) === ">") {
+                                if (key.length) {
+                                    stage.push(key);
+                                    key = "";
+                                }
+                                if (stage.length) {
+                                    combo.push(stage);
+                                    stage = [];
+                                }
+                                if (op || nc) {
+                                    throw new Error("Failed to parse key combo. Unexpected > at character index " + i + ".");
+                                }
+                                op = true;
+                                i += 1;
+                            } else if (i < s.length - 1 && s.charAt(i) === "!" && (s.charAt(i + 1) === ">" || s.charAt(i + 1) === "," || s.charAt(i + 1) === "+")) {
+                                key += s.charAt(i + 1);
+                                op = false;
+                                ws = false;
+                                nc = false;
+                                i += 2;
+                            } else if (i < s.length && s.charAt(i) !== "+" && s.charAt(i) !== ">" && s.charAt(i) !== "," && s.charAt(i) !== " ") {
+                                if (op === false && ws === true || nc === true) {
+                                    if (key.length) {
+                                        stage.push(key);
+                                        key = "";
+                                    }
+                                    if (stage.length) {
+                                        combo.push(stage);
+                                        stage = [];
+                                    }
+                                    if (combo.length) {
+                                        combos.push(combo);
+                                        combo = [];
+                                    }
+                                }
+                                op = false;
+                                ws = false;
+                                nc = false;
+                                while (i < s.length && s.charAt(i) !== "+" && s.charAt(i) !== ">" && s.charAt(i) !== "," && s.charAt(i) !== " ") {
+                                    key += s.charAt(i);
+                                    i += 1;
+                                }
+                            } else {
+                                i += 1;
+                                continue;
+                            }
+                            if (i >= s.length) {
+                                if (key.length) {
+                                    stage.push(key);
+                                    key = "";
+                                }
+                                if (stage.length) {
+                                    combo.push(stage);
+                                    stage = [];
+                                }
+                                if (combo.length) {
+                                    combos.push(combo);
+                                    combo = [];
+                                }
+                                break;
+                            }
+                        }
+                        return combos;
+                    }
+                    function stringifyKeyCombo(keyComboArray) {
+                        var cI, ccI, output = [];
+                        if (typeof keyComboArray === "string") {
+                            return keyComboArray;
+                        }
+                        if (typeof keyComboArray !== "object" || typeof keyComboArray.push !== "function") {
+                            throw new Error("Cannot stringify key combo.");
+                        }
+                        for (cI = 0; cI < keyComboArray.length; cI += 1) {
+                            output[cI] = [];
+                            for (ccI = 0; ccI < keyComboArray[cI].length; ccI += 1) {
+                                output[cI][ccI] = keyComboArray[cI][ccI].join(" + ");
+                            }
+                            output[cI] = output[cI].join(" > ");
+                        }
+                        return output.join(" ");
+                    }
+                    function getActiveKeys() {
+                        return [].concat(activeKeys);
+                    }
+                    function addActiveKey(keyName) {
+                        if (keyName.match(/\s/)) {
+                            throw new Error("Cannot add key name " + keyName + " to active keys because it contains whitespace.");
+                        }
+                        if (activeKeys.indexOf(keyName) > -1) {
+                            return;
+                        }
+                        activeKeys.push(keyName);
+                    }
+                    function removeActiveKey(keyName) {
+                        var keyCode = getKeyCode(keyName);
+                        if (keyCode === "91" || keyCode === "92") {
+                            activeKeys = [];
+                        } else {
+                            activeKeys.splice(activeKeys.indexOf(keyName), 1);
+                        }
+                    }
+                    function registerLocale(localeName, localeMap) {
+                        if (typeof localeName !== "string") {
+                            throw new Error("Cannot register new locale. The locale name must be a string.");
+                        }
+                        if (typeof localeMap !== "object") {
+                            throw new Error("Cannot register " + localeName + " locale. The locale map must be an object.");
+                        }
+                        if (typeof localeMap.map !== "object") {
+                            throw new Error("Cannot register " + localeName + " locale. The locale map is invalid.");
+                        }
+                        if (!localeMap.macros) {
+                            localeMap.macros = [];
+                        }
+                        locales[localeName] = localeMap;
+                    }
+                    function getSetLocale(localeName) {
+                        if (localeName) {
+                            if (typeof localeName !== "string") {
+                                throw new Error("Cannot set locale. The locale name must be a string.");
+                            }
+                            if (!locales[localeName]) {
+                                throw new Error("Cannot set locale to " + localeName + " because it does not exist. If you would like to submit a " + localeName + " locale map for KeyboardJS please submit it at https://github.com/RobertWHurst/KeyboardJS/issues.");
+                            }
+                            map = locales[localeName].map;
+                            macros = locales[localeName].macros;
+                            locale = localeName;
+                        }
+                        return locale;
+                    }
+                    this.Keyboard = KeyboardJS;
+                },
+                "on": function (keyCombo, onDownCallback, onUpCallback) {
+                    this.Keyboard.on(keyCombo, onDownCallback, onUpCallback);
+                },
+                "getActiveKeys": function () {
+                    return this.Keyboard.activeKeys();
+                }
+            }
+        });
+
+        //end-------------------ARE.Keyboard---------------------end
         if (typeof module != 'undefined' && module.exports && this.module !== module) { module.exports = ARE }
         else if (typeof define === 'function' && define.amd) { define(ARE) }
         else { win.ARE = ARE };

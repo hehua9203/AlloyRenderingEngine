@@ -31,10 +31,7 @@
          if (mmyCanvas) {
                 ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
                 ctx.drawImage(mmyCanvas, 0, 0);
-         } else if (o instanceof Bitmap) {
-            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
-            ctx.drawImage(o.img, 0, 0);
-        } else if (o instanceof Container || o instanceof Stage) {
+         }  else if (o instanceof Container || o instanceof Stage) {
             var list = o.children.slice(0);
             for (var i = 0, l = list.length; i < l; i++) {
                 //if containter has a containter (save-->restore-->save-->restore)will store a parents's mtx tree
@@ -42,9 +39,9 @@
                 this.render(ctx, list[i], mtx);
                 ctx.restore();
             }
-        } else if (o instanceof Sprite) {
+        } else if (o instanceof Bitmap||o instanceof Sprite) {
 
-            var rect = o._rect;
+            var rect = o.rect;
             ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
         } else if (o instanceof Shape) {
@@ -107,7 +104,7 @@
         ctx.globalAlpha *= o.alpha;
 
         // render the element:
-        if (o instanceof Bitmap || o.cacheCanvas) {
+        if (o.cacheCanvas) {
             ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
             ctx.drawImage(o.cacheCanvas || o.img, 0, 0);
         } else if (o instanceof Container) {
@@ -128,9 +125,9 @@
                     //return child;
                 }
             }
-        } else if (o instanceof Sprite) {
+        } else if (o instanceof Bitmap||o instanceof Sprite) {
 
-            var rect = o._rect;
+            var rect = o.rect;
             ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
         }
@@ -146,18 +143,15 @@
     renderCache: function (ctx, o) {     
         if (!o.isVisible()) { return; }
         // render the element:
-        if (o instanceof Bitmap) {
-            
-            ctx.drawImage(o.img, 0, 0);
-        } else if (o instanceof Container || o instanceof Stage) {
+        if (o instanceof Container || o instanceof Stage) {
             var list = o.children.slice(0);
             for (var i = 0, l = list.length; i < l; i++) {
                 ctx.save();
                 this.render(ctx, list[i]);
                 ctx.restore();
             }
-        } else if (o instanceof Sprite) {
-            var rect = o._rect;
+        } else if (o instanceof Bitmap||o instanceof Sprite) {
+            var rect = o.rect;
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
         } else if (o instanceof Shape) {
             for (var i = 0, len = o.cmds.length; i < len; i++) {

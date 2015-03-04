@@ -143,5 +143,8 @@ define("ARE.DisplayObject", {
     },
     onClick: function (fn) {
         this.on("click", fn);
+    },
+    onMouseMove: function (fn) {
+        this.on("mousemove", fn);
     }
 })

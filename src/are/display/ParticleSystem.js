@@ -76,26 +76,5 @@ define("ARE.ParticleSystem:ARE.Container", {
                 }
             }
         }
-    },
-    setAngle: function (angle) {
-        this.angle = angle;
-    },
-    setSpeed: function (speed) {
-        this.speed = speed;
-    },
-    setFilter: function (r, g, b, a) {
-        this.filter = [r, g, b, a];
-    },
-    setAngleRange: function (angle) {
-        this.angleRange = angle;
-    },
-    setEmitWidth: function (w) {
-        this.emitArea[0] = w;
-    },
-    setEmitHeight: function (h) {
-        this.emitArea[1] = h;
-    },
-    setGravity: function (g) {
-        this.gravity = g;
     }
 })

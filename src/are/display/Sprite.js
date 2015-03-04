@@ -67,7 +67,7 @@ define("ARE.Sprite:ARE.DisplayObject", {
         //当前处于的动画
         this.currentAnimation = option.currentAnimation||null;
         //当前帧所处的矩形区域
-        this._rect = [0, 0, 10, 10];
+        this.rect = [0, 0, 10, 10];
         //当前播放的图片
         this.img = this.option.imgs[0];
       
@@ -140,8 +140,8 @@ define("ARE.Sprite:ARE.DisplayObject", {
                     }
                 }
 
-                self._rect = opt.frames[frames[self.animationFrameIndex]];
-                if (self._rect.length > 4) self.img = opt.imgs[self._rect[4]];
+                self.rect = opt.frames[frames[self.animationFrameIndex]];
+                if (self.rect.length > 4) self.img = opt.imgs[self.rect[4]];
             }
         }, this.interval);
 
@@ -158,8 +158,8 @@ define("ARE.Sprite:ARE.DisplayObject", {
         self.currentAnimation = animation;
         var opt = self.option;
         var frames = opt.animations[self.currentAnimation].frames, len = frames.length;
-        self._rect = opt.frames[frames[self.animationFrameIndex]];
-        if (self._rect.length > 4) self.img = opt.imgs[self._rect[4]];
+        self.rect = opt.frames[frames[self.animationFrameIndex]];
+        if (self.rect.length > 4) self.img = opt.imgs[self.rect[4]];
     
     }
 

@@ -38,21 +38,6 @@ define("ARE.FPS", {
             }
         }, 200)
 
-        this.execList = [];
-    },
-    exec: function (fn, fps) {
-        for (var i = 0, len = this.execList.length; i < len; i++) {
-            var item = this.execList[i];
-            if (fn === item["fn"] && fps === item["fps"]) {
-                return;
-            }
-        }
-        
-        var loop=RAF.requestInterval(function () {
-            fn();
-        }, 1000 / fps);
-
-        this.execList.push({ fn: fn, fps: fps,loop:loop });
     },
     _computeFPS: function () {
         this.current = new Date;

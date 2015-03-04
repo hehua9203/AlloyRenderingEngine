@@ -20,30 +20,13 @@
           { name: "ARE.Particle", url: "are/display" },
           { name: "ARE.Util", url: "are/util" },
           { name: "ARE.Vector2", url: "are/util" },
+          { name: "ARE.Keyboard", url: "are/util" },
           { name: "ARE.ParticleSystem", url: "are/display" }
     ]
 });
 
 define("Main", ["ARE"], {
     ctor: function () {
-        this instanceof DisplayObject;
-        this instanceof Bitmap;
-        this instanceof Sprite;
-        this instanceof Stage;
-        this instanceof Shape;
-        this instanceof Container;
-        this instanceof Txt;
-        this instanceof Matrix2D;
-        this instanceof Loader;
-        this instanceof UID;
-        this instanceof CanvasRenderer;
-        this instanceof WebGLRenderer;
-        this instanceof GLMatrix;
-        this instanceof RAF;
-        this instanceof FPS;
-        this instanceof Particle;
-        this instanceof Util;
-        this instanceof Vector2;
-        this instanceof ParticleSystem;
+        DisplayObject; Bitmap; Sprite; Stage; Shape; Container; Txt; Matrix2D; Loader; UID; CanvasRenderer; WebGLRenderer; GLMatrix; RAF; FPS; Particle; Util; Vector2; ParticleSystem; Keyboard;
     }
 })

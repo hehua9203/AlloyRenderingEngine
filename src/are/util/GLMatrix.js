@@ -46,6 +46,7 @@ define("ARE.GLMatrix", {
 
                 this.mat4 = mat4;
                 this.quat4 = quat4;
+                this.vec3 = vec3;
             }
         }
 })

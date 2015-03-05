@@ -129,6 +129,7 @@
                 var ifm = document.getElementById("iframe1");
                 if (e.node.url) {
                     ifm.src = e.node.url;
+					ifm.focus();
                 } else {
                     $tree.tree('toggle', e.node);
                 }

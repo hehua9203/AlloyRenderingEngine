@@ -18,6 +18,7 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [txt](http://alloyteam.github.io/AlloyRenderingEngine/example/txt.html) 
 * [box2d](http://alloyteam.github.io/AlloyRenderingEngine/example/box2d.html) 
 * [keyboard events](http://alloyteam.github.io/AlloyRenderingEngine/example/keyboardevents.html) 
+* [collision](http://alloyteam.github.io/AlloyRenderingEngine/example/collision.html) 
 
 # Tutorials
 * [lesson1](http://www.cnblogs.com/iamzhanglei/p/4306146.html)

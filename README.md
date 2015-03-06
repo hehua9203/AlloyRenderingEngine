@@ -7,18 +7,19 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 
-* [cache](http://alloyteam.github.io/AlloyRenderingEngine/example/cache.html) 
+* [transform](http://alloyteam.github.io/AlloyRenderingEngine/example/transform.html) 
 * [filter](http://alloyteam.github.io/AlloyRenderingEngine/example/filter.html) 
+* [shape](http://alloyteam.github.io/AlloyRenderingEngine/example/shape.html) 
+* [cache](http://alloyteam.github.io/AlloyRenderingEngine/example/cache.html) 
+* [sprite](http://alloyteam.github.io/AlloyRenderingEngine/example/sprite.html) 
+* [txt](http://alloyteam.github.io/AlloyRenderingEngine/example/txt.html) 
 * [particle](http://alloyteam.github.io/AlloyRenderingEngine/example/particle.html) 
 * [particlesystem](http://alloyteam.github.io/AlloyRenderingEngine/example/particlesystem.html) 
 * [particleeditor](http://alloyteam.github.io/ParticleEditor/)
-* [shape](http://alloyteam.github.io/AlloyRenderingEngine/example/shape.html) 
-* [sprite](http://alloyteam.github.io/AlloyRenderingEngine/example/sprite.html) 
-* [transform](http://alloyteam.github.io/AlloyRenderingEngine/example/transform.html) 
-* [txt](http://alloyteam.github.io/AlloyRenderingEngine/example/txt.html) 
 * [box2d](http://alloyteam.github.io/AlloyRenderingEngine/example/box2d.html) 
 * [keyboard events](http://alloyteam.github.io/AlloyRenderingEngine/example/keyboardevents.html) 
 * [collision](http://alloyteam.github.io/AlloyRenderingEngine/example/collision.html) 
+* [loader](http://alloyteam.github.io/AlloyRenderingEngine/example/loader/loader.html) 
 
 # Tutorials
 * [lesson1](http://www.cnblogs.com/iamzhanglei/p/4306146.html)

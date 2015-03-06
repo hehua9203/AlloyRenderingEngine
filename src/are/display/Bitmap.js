@@ -54,9 +54,15 @@ define("ARE.Bitmap:ARE.DisplayObject", {
         this.cacheCtx.putImageData(imageData, 0, 0);
     },
     setRect: function (x, y, w, h) {
-        this.rect = [x, y, w, h];
-        this.width = w;
-        this.height = h;
+        if (arguments.length === 1) {
+            this.setRect.apply(this, arguments[0]);
+        } else {
+            this.rect = [x, y, w, h];
+            this.width = w;
+            this.height = h;
+            this.regX = this.width * this.originX;
+            this.regY = this.height * this.originY;
+        }
     },
     clone: function () {
         var o = new Bitmap(this.img);

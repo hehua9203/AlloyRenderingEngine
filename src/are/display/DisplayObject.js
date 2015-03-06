@@ -6,8 +6,9 @@
 */
 define("ARE.DisplayObject", {
     ctor: function () {
-        this.alpha=this.scaleX = this.scaleY = 1;
-        this.x = this.y = this.rotation = this.originX = this.originY = this.skewX = this.skewY =this.width=this.height= 0;
+        this.alpha = this.scaleX = this.scaleY = 1;
+        this.x = this.y = this.rotation = this.originX = this.originY = this.skewX = this.skewY = this.width = this.height = 0;
+        this.flipX = this.flipY = false;
         this.visible = true;
         this._matrix = new Matrix2D();
         this.events = {};

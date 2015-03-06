@@ -1,5 +1,5 @@
 ﻿/**
- * 位图，继承自DisplayObject
+ * 帧率
  * @class FPS
  * @constructor
  */

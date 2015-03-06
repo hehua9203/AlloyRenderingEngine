@@ -21,7 +21,7 @@
             o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
         }
         mtx = o._matrix;
-        mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+        mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY, o.filpX, o.flipY);
 
         var a = ctx.globalAlpha, cp = ctx.globalCompositeOperation;
       
@@ -29,7 +29,7 @@
         ctx.globalCompositeOperation = o.compositeOperation;
         var mmyCanvas = o.cacheCanvas || o.txtCanvas;
          if (mmyCanvas) {
-                ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
+                ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
                 ctx.drawImage(mmyCanvas, 0, 0);
          }  else if (o instanceof Container || o instanceof Stage) {
             var list = o.children.slice(0);
@@ -42,10 +42,10 @@
         } else if (o instanceof Bitmap||o instanceof Sprite) {
 
             var rect = o.rect;
-            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
+            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
         } else if (o instanceof Shape) {
-            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
+            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
             for (var i = 0, len = o.cmds.length; i < len; i++) {
                 var cmd = o.cmds[i]
                 if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
@@ -69,12 +69,12 @@
             o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
         }
         mtx = o._matrix;
-        mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+        mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY, o.filpX, o.flipY);
         var list = o.children.slice(0), l = list.length;
         for (var i = l - 1; i >= 0; i--) {
             var child = list[i];
             mtx.reinitialize(1, 0, 0, 1, 0, 0);
-            mtx.appendTransform(o.x - x, o.y - y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+            mtx.appendTransform(o.x - x, o.y - y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY, o.filpX, o.flipY);
 
             ctx.save();
             var child = list[i];
@@ -98,14 +98,14 @@
             o._matrix.reinitialize(1, 0, 0, 1, 0, 0);
         }
         mtx = o._matrix;
-        mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY);
+        mtx.appendTransform(o.x, o.y, o.scaleX, o.scaleY, o.rotation, o.skewX, o.skewY, o.regX, o.regY, o.filpX, o.flipY);
 
         var a = ctx.globalAlpha;
         ctx.globalAlpha *= o.alpha;
 
         // render the element:
         if (o.cacheCanvas) {
-            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
+            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
             ctx.drawImage(o.cacheCanvas || o.img, 0, 0);
         } else if (o instanceof Container) {
             var list = o.children.slice(0),l=list.length;
@@ -128,7 +128,7 @@
         } else if (o instanceof Bitmap||o instanceof Sprite) {
 
             var rect = o.rect;
-            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx + 0.5 | 0, mtx.ty + 0.5 | 0);
+            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
         }
 

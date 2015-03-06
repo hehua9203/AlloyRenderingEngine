@@ -16,7 +16,7 @@
         this.b = this.c = this.tx = this.ty = 0;
         return this;
     },
-    appendTransform : function(x, y, scaleX, scaleY, rotation, skewX, skewY, regX, regY) {
+    appendTransform : function(x, y, scaleX, scaleY, rotation, skewX, skewY, regX, regY,flipX,flipY) {
         if (rotation%360) {
             var r = rotation*Matrix2D.DEG_TO_RAD;
             var cos = Math.cos(r);
@@ -44,6 +44,15 @@
             // prepend the registration offset:
             this.tx -= regX*this.a+regY*this.c; 
             this.ty -= regX*this.b+regY*this.d;
+        }
+
+        if( flipX ){
+            this.a *= -1
+            this.c *= -1;
+        }
+        if (flipY) {
+            this.b *= -1
+            this.d *= -1;
         }
         return this;
     },

@@ -22,7 +22,7 @@
         this.direction = "";
         this.speed = 2;
         this.splitSpeed = this.speed / 1.4;
-        this.rttDirMap = { up: 0, up_right: 45, right: 90, right_down: 135, down: 180,down_left:225, left: 270,left_up:315 };
+        this.rttDirMap = { up: 0, up_right: 45, right: 90, right_down: 135, down: 180, down_left: 225, left: 270, left_up: 315 };
     },
     tick: function () {
         this.turn(this.direction);
@@ -56,13 +56,13 @@
                 this.y -= this.splitSpeed;
                 break;
         }
-       
+
     },
     stop: function () {
         this.direction = "";
     },
     turn: function () {
-       
+
         if (this.direction) this.rotation = this.rttDirMap[this.direction];
     }
 

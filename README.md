@@ -4,20 +4,27 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [website](http://alloyteam.github.io/AlloyRenderingEngine/) 
 * [api](http://alloyteam.github.io/AlloyRenderingEngine/doc/)
 * [kmdjs](https://github.com/kmdjs/kmdjs)
+* [vertex generator](https://kmdjs.github.io/arejs-tool-sprite/)
+* [txt to image](http://kmdjs.github.io/cwb/)
+* [particle editor](http://alloyteam.github.io/ParticleEditor/)
+* [map editor](http://alloyteam.github.io/MapEditor/)
+* [txt to texture](http://alloyteam.github.io/AlloyRenderingEngine/example/glTxt.html)
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 
-* [cache](http://alloyteam.github.io/AlloyRenderingEngine/example/cache.html) 
-* [filter](http://alloyteam.github.io/AlloyRenderingEngine/example/filter.html) 
-* [particle](http://alloyteam.github.io/AlloyRenderingEngine/example/particle.html) 
-* [particlesystem](http://alloyteam.github.io/AlloyRenderingEngine/example/particlesystem.html) 
-* [particleeditor](http://alloyteam.github.io/ParticleEditor/)
-* [shape](http://alloyteam.github.io/AlloyRenderingEngine/example/shape.html) 
-* [sprite](http://alloyteam.github.io/AlloyRenderingEngine/example/sprite.html) 
 * [transform](http://alloyteam.github.io/AlloyRenderingEngine/example/transform.html) 
+* [flip](http://alloyteam.github.io/AlloyRenderingEngine/example/flip.html) 
+* [filter](http://alloyteam.github.io/AlloyRenderingEngine/example/filter.html) 
+* [shape](http://alloyteam.github.io/AlloyRenderingEngine/example/shape.html) 
+* [cache](http://alloyteam.github.io/AlloyRenderingEngine/example/cache.html) 
+* [sprite](http://alloyteam.github.io/AlloyRenderingEngine/example/sprite.html) 
 * [txt](http://alloyteam.github.io/AlloyRenderingEngine/example/txt.html) 
+* [particle](http://alloyteam.github.io/AlloyRenderingEngine/example/particle.html) 
+* [particle system](http://alloyteam.github.io/AlloyRenderingEngine/example/particlesystem.html) 
 * [box2d](http://alloyteam.github.io/AlloyRenderingEngine/example/box2d.html) 
 * [keyboard events](http://alloyteam.github.io/AlloyRenderingEngine/example/keyboardevents.html) 
+* [collision](http://alloyteam.github.io/AlloyRenderingEngine/example/collision.html) 
+* [loader](http://alloyteam.github.io/AlloyRenderingEngine/example/loader/loader.html) 
 
 # Tutorials
 * [lesson1](http://www.cnblogs.com/iamzhanglei/p/4306146.html)
@@ -54,8 +61,5 @@ stage.onTick(function () {
     bmp.scaleY += step;
 });
 ```
-
-# Contact
-If you’re interested in AlloyRenderingEngine then feel free to follow me on twitter ([@iamzhanglei](https://twitter.com/iamzhanglei)) .
 
 This content is released under the (http://opensource.org/licenses/MIT) MIT License.

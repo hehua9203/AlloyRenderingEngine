@@ -5,8 +5,10 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [api](http://alloyteam.github.io/AlloyRenderingEngine/doc/)
 * [kmdjs](https://github.com/kmdjs/kmdjs)
 * [vertex generator](https://kmdjs.github.io/arejs-tool-sprite/)
+* [txt to image](http://kmdjs.github.io/cwb/)
+* [particle editor](http://alloyteam.github.io/ParticleEditor/)
+* [map editor](http://alloyteam.github.io/MapEditor/)
 * [txt to texture](http://alloyteam.github.io/AlloyRenderingEngine/example/glTxt.html)
-
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 
@@ -19,7 +21,6 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [txt](http://alloyteam.github.io/AlloyRenderingEngine/example/txt.html) 
 * [particle](http://alloyteam.github.io/AlloyRenderingEngine/example/particle.html) 
 * [particle system](http://alloyteam.github.io/AlloyRenderingEngine/example/particlesystem.html) 
-* [particle editor](http://alloyteam.github.io/ParticleEditor/)
 * [box2d](http://alloyteam.github.io/AlloyRenderingEngine/example/box2d.html) 
 * [keyboard events](http://alloyteam.github.io/AlloyRenderingEngine/example/keyboardevents.html) 
 * [collision](http://alloyteam.github.io/AlloyRenderingEngine/example/collision.html) 

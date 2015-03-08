@@ -91,7 +91,24 @@
                 body.bitmap.setRect(rect);
                 stage && stage.add(body.bitmap)
                 return body;
-        }
-
+        },
+        correctingVertexList: function (vertexList) {
+            var firstVertex = vertexList[0],
+                minX = firstVertex.x,
+                minY = firstVertex.y,
+                i = 1,
+                len = vertexList.length;
+                    for (; i < len; i++) {
+                        var vertex = vertexList[i];
+                        vertex.x < minX && (minX = vertex.x);
+                        vertex.y < minY && (minY = vertex.y);
+                    }
+                    i = 0;
+                    for (; i < len; i++) {
+                        var vertex = vertexList[i];
+                        vertex.x -= minX;
+                        vertex.y -= minY;
+                    }
+                }
     }
 })

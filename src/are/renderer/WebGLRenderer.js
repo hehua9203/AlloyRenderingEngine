@@ -212,7 +212,7 @@
             return;
         }
         var textures = this._cacheTextures;
-        var textureCount = this._textures.length;
+        var textureCount = this._cacheTextures.length + this._textures.length;
 
         for (var i = 0, l = textures.length; i < l; i++) {
             if (o.cacheID&&textures[i]._cacheID == o.cacheID) {

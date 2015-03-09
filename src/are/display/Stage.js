@@ -42,6 +42,8 @@ define("ARE.Stage:ARE.Container", {
             }
         }
      
+        this._scaleX = this._scaleY = null;
+
         this.canvas.addEventListener("click", this._handleClick.bind(this), false);
         this.canvas.addEventListener("mousemove", this._handleMouseMove.bind(this), false);
         window.addEventListener("keydown", this._handleKeyDown.bind(this), false);
@@ -77,9 +79,15 @@ define("ARE.Stage:ARE.Container", {
         this.keyUpCallback && this.keyUpCallback(evt.keyCode)
     },
     _handleClick: function (evt) {
-       // var child = this._getHitChild(this.hitCtx, evt.pageX - this.offset[0], evt.pageY - this.offset[1], "click");
+        // var child = this._getHitChild(this.hitCtx, evt.pageX - this.offset[0], evt.pageY - this.offset[1], "click");
         evt.stageX = evt.pageX - this.offset[0];
         evt.stageY = evt.pageY - this.offset[1];
+        if (this._scaleX) {
+            var p = this.correctingXY(evt.stageX, evt.stageY);
+            evt.stageX = p.x;
+            evt.stageY = p.y;
+        }
+
         var callbacks = this.events["click"];
         if (callbacks) {
             for (var i = 0, len = callbacks.length; i < len; i++) {
@@ -87,12 +95,17 @@ define("ARE.Stage:ARE.Container", {
                 callback(evt);
             }
         }
-        var child = this.hitRenderer.hitRender(this.hitCtx, this, null, evt.pageX - this.offset[0], evt.pageY - this.offset[1], "click");
+        var child = this.hitRenderer.hitRender(this.hitCtx, this, null, evt.stageX, evt.stageY, "click");
         // if (child) child.execEvent("click");
     },
     _handleMouseMove: function (evt) {
-        evt.stageX= evt.pageX - this.offset[0];
-        evt.stageY= evt.pageY - this.offset[1];
+        evt.stageX = evt.pageX - this.offset[0];
+        evt.stageY = evt.pageY - this.offset[1];
+        if (this._scaleX) {
+            var p = this.correctingXY(evt.stageX, evt.stageY);
+            evt.stageX = p.x;
+            evt.stageY = p.y;
+        }
         var callbacks = this.events["mousemove"];
         if (callbacks) {
             for (var i = 0, len = callbacks.length; i < len; i++) {
@@ -196,6 +209,31 @@ define("ARE.Stage:ARE.Container", {
     getActiveKeys:function(){
 
        return Keyboard.getActiveKeys();
+    },
+    scalable: function (scaleX,scaleY) {
+        document.body.style.margin = 0;
+        document.documentElement.style.margin = 0;
+        document.body.style.border = 0;
+        document.documentElement.style.border = 0;
+        document.body.style.padding = 0;
+        document.documentElement.style.padding = 0;
+        document.body.style.width = "100%";
+        document.documentElement.style.width = "100%";
+        document.body.style.height = "100%";
+        document.documentElement.style.height = "100%";
+        this._scaleX = scaleX;
+        this._scaleY = scaleY;
+        var canvas = this.canvas; 
+        canvas.style.position = "absolute";
+        canvas.style.width = (scaleX * 100) + "%";
+        canvas.style.height = (scaleY * 100) + "%";
+        canvas.style.left = 100 * (1 - scaleX) / 2 + "%";
+        canvas.style.top = 100 * (1 - scaleY) / 2 + "%";
+        canvas.style.border = "0px solid #ccc";
+        this.offset = this._getXY(this.canvas);
+    },
+    correctingXY: function (x,y) {
+        return { x: x * this.canvas.width / (window.innerWidth * this._scaleX), y: y * this.canvas.height / (window.innerHeight * this._scaleY) };
     }
 })
 

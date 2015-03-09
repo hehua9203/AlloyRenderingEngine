@@ -9,6 +9,7 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [particle editor](http://alloyteam.github.io/ParticleEditor/)
 * [map editor](http://alloyteam.github.io/MapEditor/)
 * [txt to texture](http://alloyteam.github.io/AlloyRenderingEngine/example/glTxt.html)
+* [combine images](http://kmdjs.github.io/combineimages/)
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 

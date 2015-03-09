@@ -10,6 +10,7 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [map editor](http://alloyteam.github.io/MapEditor/)
 * [txt to texture](http://alloyteam.github.io/AlloyRenderingEngine/example/glTxt.html)
 * [combine images](http://kmdjs.github.io/combineimages/)
+* [tiled](http://www.mapeditor.org/)
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 
@@ -26,6 +27,7 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [keyboard events](http://alloyteam.github.io/AlloyRenderingEngine/example/keyboardevents.html) 
 * [collision](http://alloyteam.github.io/AlloyRenderingEngine/example/collision.html) 
 * [loader](http://alloyteam.github.io/AlloyRenderingEngine/example/loader/loader.html) 
+* [scalable](http://alloyteam.github.io/AlloyRenderingEngine/example/scalable.html)
 
 # Tutorials
 * [lesson1](http://www.cnblogs.com/iamzhanglei/p/4306146.html)

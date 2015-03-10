@@ -11,7 +11,7 @@ Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 * [txt to texture](http://alloyteam.github.io/AlloyRenderingEngine/example/glTxt.html)
 * [combine images](http://kmdjs.github.io/combineimages/)
 * [tiled](http://www.mapeditor.org/)
-* [image splitter](kmdjs.github.io/imagesplitter/)
+* [image splitter](http://kmdjs.github.io/imagesplitter/)
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 

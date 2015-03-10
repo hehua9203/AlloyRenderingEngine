@@ -44,17 +44,6 @@
             var rect = o.rect;
             ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-        } else if (o instanceof Shape) {
-            ctx.setTransform(mtx.a, mtx.b, mtx.c, mtx.d, mtx.tx , mtx.ty );
-            for (var i = 0, len = o.cmds.length; i < len; i++) {
-                var cmd = o.cmds[i]
-                if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
-
-                    ctx[cmd[0]] = cmd[1][0];
-                } else {
-                    ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
-                }
-            }
         }
 
         // reset everything:
@@ -153,18 +142,7 @@
         } else if (o instanceof Bitmap||o instanceof Sprite) {
             var rect = o.rect;
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-        } else if (o instanceof Shape) {
-            for (var i = 0, len = o.cmds.length; i < len; i++) {
-                var cmd = o.cmds[i]
-                if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
-                    ctx[cmd[0]] = cmd[1][0];
-                } else {
-                    ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
-                }
-            }
         }
-
-
     }
 
 

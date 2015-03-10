@@ -5,22 +5,22 @@
 * @constructor
 */
 define("ARE.Shape:ARE.DisplayObject", {
-    ctor: function () {
+    ctor: function (width, height,debug) {
         this._super();
-     
+
         this.cmds = [];
 
-        this.assMethod=["fillStyle", "strokeStyle", "lineWidth"];
+        this.assMethod = ["fillStyle", "strokeStyle", "lineWidth"];
+        this.width = width
+        this.height = height;
+        if (debug) {
+            this.fillStyle("red");
+            this.fillRect(0, 0, width, height);
+        }
+        this.cache();
     },
-    /**
-     * 设置包围盒 
-     * @method getBound
-     */
-    setBound: function (w, h) {
-        this.width = w;
-        this.height = h;
-    },
-    draw: function (ctx) {
+    end: function () {
+        var ctx = this.cacheCtx;
         for (var i = 0, len = this.cmds.length; i < len; i++) {
             var cmd = this.cmds[i]
             if (this.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {

@@ -100,7 +100,7 @@ define("ARE.DisplayObject", {
      * 缓存
      * @method cache
      */
-    cache : function(x, y, width, height) {
+    cache : function() {
         // draw to canvas.
         //scale = scale || 1;
         if (!this.cacheCanvas) {
@@ -114,7 +114,7 @@ define("ARE.DisplayObject", {
         //this._cacheScale = scale;
         
 
-        Stage.renderer.updateCache(this.cacheCtx, this, width, height);
+        Stage.renderer.updateCache(this.cacheCtx, this, bound.width, bound.height);
     },
     /**
      * 清除缓存 

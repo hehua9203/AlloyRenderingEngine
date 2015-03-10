@@ -8,26 +8,36 @@ define("ARE.Bitmap:ARE.DisplayObject", {
     ctor: function (img) {
         this._super();
         if (typeof img == "string") {
-            var self = this;
-            this.visible = false;
-            this.img = document.createElement("img");
-            this.img.onload = function () {
-                self.visible = true;
-                if (!self.rect) self.rect = [0, 0, self.img.width, self.img.height];
-                self.width = self.rect[2];
-                self.height = self.rect[3];
-                self.regX = self.width * self.originX;
-                self.regY = self.height * self.originY;
-            }
-            this.img.src = img;
+            var cacheImg=Bitmap[img];
+            if (cacheImg) {
+                this._init(cacheImg);
+            } else {
+                var self = this;
+                this.visible = false;
+                this.img = document.createElement("img");
+                this.img.onload = function () {
+                    self.visible = true;
+                    if (!self.rect) self.rect = [0, 0, self.img.width, self.img.height];
+                    self.width = self.rect[2];
+                    self.height = self.rect[3];
+                    self.regX = self.width * self.originX;
+                    self.regY = self.height * self.originY;
 
-            
+                    Bitmap[img] = self.img;
+                }
+                this.img.src = img;
+
+            }
         } else {
-            this.img = img;
-            this.rect = [0, 0, img.width, img.height];
-            this.width = img.width;
-            this.height = img.height;
+            this._init(img);
         }
+    },
+    _init: function (img) {
+        this.img = img;
+        this.rect = [0, 0, img.width, img.height];
+        this.width = img.width;
+        this.height = img.height;
+
     },
     /**
      * 设置滤镜

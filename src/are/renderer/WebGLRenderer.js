@@ -446,15 +446,6 @@
         } else if (o instanceof Bitmap||o instanceof Sprite) {
             var rect = o.rect;
             ctx.drawImage(o.img, rect[0], rect[1], rect[2], rect[3], 0, 0, rect[2], rect[3]);
-        } else if (o instanceof Shape) {
-            for (var i = 0, len = o.cmds.length; i < len; i++) {
-                var cmd = o.cmds[i]
-                if (o.assMethod.join("-").match(new RegExp("\\b" + cmd[0] + "\\b", "g"))) {
-                    ctx[cmd[0]] = cmd[1][0];
-                } else {
-                    ctx[cmd[0]].apply(ctx, Array.prototype.slice.call(cmd[1]));
-                }
-            }
         }
 
 

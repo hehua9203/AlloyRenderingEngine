@@ -45,7 +45,7 @@
             this.tx -= regX*this.a+regY*this.c; 
             this.ty -= regX*this.b+regY*this.d;
         }
-
+        //Unable to flip the original position,because the obj's height/width was unknow here
         if( flipX ){
             this.a *= -1
             this.c *= -1;

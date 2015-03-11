@@ -1,4 +1,4 @@
-# For more cool stuff ，please go to the AGE rep
+# For more cool stuff ，please go to the AGE repository
 
 https://github.com/AlloyTeam/AlloyGameEngine
 

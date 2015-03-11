@@ -6,7 +6,7 @@ https://github.com/AlloyTeam/AlloyGameEngine
 
 http://alloyteam.github.io/AlloyGameEngine/
 
-
+This code will migrate into the [AlloyGameEngine](https://github.com/AlloyTeam/AlloyGameEngine) .Please move your pointers there.
 
 # AlloyRenderingEngine
 Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering

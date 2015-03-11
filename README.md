@@ -1,6 +1,12 @@
 # For more cool stuff 
 
-please go to the AGE repository: https://github.com/AlloyTeam/AlloyGameEngine
+please go to the AGE repository: 
+
+https://github.com/AlloyTeam/AlloyGameEngine
+
+http://alloyteam.github.io/AlloyGameEngine/
+
+
 
 # AlloyRenderingEngine
 Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering

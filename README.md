@@ -1,17 +1,9 @@
 # AlloyRenderingEngine
 Super fast HTML 5 2D rendering engine , supporting Canvas and WebGL rendering
 
-* [website](http://alloyteam.github.io/AlloyRenderingEngine/) 
 * [api](http://alloyteam.github.io/AlloyRenderingEngine/doc/)
 * [kmdjs](https://github.com/kmdjs/kmdjs)
-* [vertex generator](https://kmdjs.github.io/arejs-tool-sprite/)
-* [txt to image](http://kmdjs.github.io/cwb/)
-* [particle editor](http://alloyteam.github.io/ParticleEditor/)
-* [map editor](http://alloyteam.github.io/MapEditor/)
-* [txt to texture](http://alloyteam.github.io/AlloyRenderingEngine/example/glTxt.html)
-* [combine images](http://kmdjs.github.io/combineimages/)
-* [tiled](http://www.mapeditor.org/)
-* [image splitter](http://kmdjs.github.io/imagesplitter/)
+
 
 # Demos
 * [bitmap](http://alloyteam.github.io/AlloyRenderingEngine/example/bitmap.html) 

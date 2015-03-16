@@ -73,7 +73,7 @@ define("Main", ["ARE"], {
 				},
 				currentAnimation: "walk",
 				tickAnimationEnd: function () {
-					console.log("播完一轮");
+					//console.log("播完一轮");
 				},
 				animationEnd : function () {
 					alert("播放完成")
